@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns_apps = [
-    path('users/', include('apps.users.urls')),
+    path('users/', include('apps.user.urls')),
     path('officer/', include('apps.officer.urls')),
     path('notice/', include('apps.notice.urls')),
     path('gallery/', include('apps.gallery.urls')),

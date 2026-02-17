@@ -1,4 +1,5 @@
 from pathlib import Path
+from decouple import config, Csv
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -9,21 +10,57 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8s-2eqhj$j#nzve6=oq@oje+u8ga14*uhxm3d5cokq0ank%mru'
+SECRET_KEY = f"'{config('SECRET_KEY')}'"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", cast=bool)
+PRODUCTION = config("PRODUCTION", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+# Allow all hosts during development
+
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+CSRF_TRUSTED_ORIGINS = [
+    # Add your frontend URLs here
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    
+    # Add production frontend URL when deploying
+    "https://kobg.org/", 
+]
+# Allow all domains (development purposes)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# OR restrict to specific domains (recommended for production)
+# CORS_ALLOWED_ORIGINS = [
+#     "https://example.com",
+#     "https://sub.example.com",
+# ]
+
+
+# Email Settings
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = "no-reply@example.com"
 
 
 # Application definition
 CUSTOM_APPS = [
-    
+    "apps.user",
+    "apps.officer",
+    "apps.notice",
+    "apps.gallery",
 ]
 
 INSTALLED_LIBRARY = [
-
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
+    
 ]
 # Application definition
 
@@ -42,9 +79,15 @@ INSTALLED_APPS = (
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be at the top
+    'django.middleware.common.CommonMiddleware',
+
+    # Static files (CSS,JS,images) when using Daphne or any ASGI server, because they don’t serve static files by default. 
+    # After adding this middleware, remember to run: `python manage.py collectstatic 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -56,7 +99,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        "DIRS": [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -81,6 +124,21 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": config("MYSQL_DB"),
+#         "USER": config("MYSQL_USER"),
+#         "PASSWORD": config("MYSQL_PASSWORD"),
+#         "HOST": config("MYSQL_HOST", default="localhost"),
+#         "PORT": config("MYSQL_PORT", default="3306"),
+#         "OPTIONS": {
+#             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+#         },
+#     }
+# }
+
 
 
 # Password validation
