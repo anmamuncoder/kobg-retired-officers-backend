@@ -1,0 +1,64 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ==========================
+# Virtual Environment
+# ==========================
+venv/
+env/
+.venv/
+
+# ==========================
+# Django stuff
+# ==========================
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# ==========================
+# Django Secrets
+# ==========================
+.env
+.env.*
+secrets.json
+
+# ==========================
+# IDE / Editor
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# OS files
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Testing / Coverage
+# ==========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ==========================
+# Build / Distribution
+# ==========================
+build/
+dist/
+*.egg-info/
+
+# ==========================
+# Migrations (keep if shared)
+# ==========================
+# Uncomment ONLY if you don't want migrations
+# */migrations/
+# !*/migrations/__init__.py
