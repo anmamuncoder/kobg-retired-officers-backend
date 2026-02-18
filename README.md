@@ -43,6 +43,35 @@ kobg-retired-officers-backend/
 └── README.md
 ```
 
+<br>
+
+### Location of API Docs OpenAPI 3.0 specification
+ 
+#### **How to View the API Documentation**
+
+You can load the file directly in Swagger Online Editor: <br>
+🔗 **Swagger Online Editor** [editor.swagger.io](https://editor.swagger.io/)
+
+**Steps:**
+
+1. Open the Swagger Editor link above.
+2. On the top menu, click **File → Import File → Paste JSON/YAML**.
+3. Open the `docs/*.yml` file from this repository on GitHub.
+4. Copy the entire contents of the YAML file.
+5. Paste it into the Swagger Editor.
+6. The interactive API documentation will load automatically.
+
+<br>
+
+```shell
+docs/
+├── user-management.yml      # Authentication APIs 
+│                             # Role Base Admin/Officer Login, Register, Admin create, Officer Register Data approve, Profile Update
+│
+
+```
+<br>
+
 
 
 > [kobg-retired-officers-backend](https://github.com/anmamuncoder/kobg-retired-officers-backend)

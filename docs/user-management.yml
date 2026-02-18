@@ -1,0 +1,825 @@
+openapi: 3.0.3
+
+info:
+  title: User Management API
+  description: |
+    REST API for user registration, authentication, profile management, 
+    and admin operations. Uses JWT-based authentication via SimpleJWT.
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://your-domain.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User registration and login
+  - name: Users
+    description: User listing and profile management
+  - name: Admin
+    description: Admin-only operations (requires staff/admin privileges)
+
+# ─────────────────────────────────────────────
+# SECURITY SCHEMES
+# ─────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from the /users/login/ endpoint.
+
+  # ─────────────────────────────────────────────
+  # REUSABLE SCHEMAS
+  # ─────────────────────────────────────────────
+  schemas:
+
+    # ── User (full profile, read) ──────────────
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        number_type:
+          type: string
+          example: "Service Number BA/BSS"
+        number:
+          type: string
+          example: "BA-12345"
+        rank:
+          type: string
+          enum:
+            - second_lieutenant
+            - lieutenant
+            - captain
+            - major
+            - lieutenant_colonel
+            - colonel
+            - brigadier_general
+            - major_general
+            - lieutenant_general
+            - general
+          description: |
+            Military rank of the user. Accepted values (stored value → display label):
+            - `second_lieutenant` → 2nd Lieutenant
+            - `lieutenant` → Lieutenant
+            - `captain` → Captain
+            - `major` → Major
+            - `lieutenant_colonel` → Lieutenant Colonel
+            - `colonel` → Colonel
+            - `brigadier_general` → Brigadier General
+            - `major_general` → Major General
+            - `lieutenant_general` → Lieutenant General
+            - `general` → General
+          example: "major"
+          nullable: true
+        full_name:
+          type: string
+          example: "John Doe"
+        decoration:
+          type: string
+          example: "MC"
+          nullable: true
+        course_type:
+          type: string
+          example: "Long Course"
+          nullable: true
+        course_number:
+          type: string
+          example: "LC-99"
+          nullable: true
+        retirement_date:
+          type: string
+          format: date
+          example: "2030-12-31"
+          nullable: true
+        ts_number:
+          type: string
+          example: "TS-9876"
+          nullable: true
+        address_type:
+          type: string
+          example: "Permanent"
+          nullable: true
+        phone:
+          type: string
+          example: "+8801711000000"
+          nullable: true
+        whatsapp_number:
+          type: string
+          example: "+8801711000000"
+          nullable: true
+        nok_name:
+          type: string
+          example: "Jane Doe"
+          nullable: true
+        nok_phone:
+          type: string
+          example: "+8801711000001"
+          nullable: true
+        nok_relation:
+          type: string
+          example: "Spouse"
+          nullable: true
+        is_staff:
+          type: boolean
+          readOnly: true
+          example: false
+
+    # ── Registration request ───────────────────
+    UserRegistrationRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          example: "SecurePass@123"
+        number_type:
+          type: string
+          example: "Service Number BA/BSS"
+        number:
+          type: string
+          example: "BA-12345"
+        rank:
+          type: string
+          enum:
+            - second_lieutenant
+            - lieutenant
+            - captain
+            - major
+            - lieutenant_colonel
+            - colonel
+            - brigadier_general
+            - major_general
+            - lieutenant_general
+            - general
+          example: "major"
+        full_name:
+          type: string
+          example: "John Doe"
+        decoration:
+          type: string
+          example: "MC"
+        course_type:
+          type: string
+          example: "Long Course"
+        course_number:
+          type: string
+          example: "LC-99"
+        retirement_date:
+          type: string
+          format: date
+          example: "2030-12-31"
+        ts_number:
+          type: string
+          example: "TS-9876"
+        address_type:
+          type: string
+          example: "Permanent"
+        phone:
+          type: string
+          example: "+8801711000000"
+        whatsapp_number:
+          type: string
+          example: "+8801711000000"
+        nok_name:
+          type: string
+          example: "Jane Doe"
+        nok_phone:
+          type: string
+          example: "+8801711000001"
+        nok_relation:
+          type: string
+          example: "Spouse"
+
+    # ── Login request ──────────────────────────
+    UserLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          example: "SecurePass@123"
+
+    # ── Login response ─────────────────────────
+    UserLoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login successful"
+        user_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        access_key:
+          type: string
+          description: Short-lived JWT access token.
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_key:
+          type: string
+          description: Long-lived JWT refresh token.
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        is_staff:
+          type: boolean
+          example: false
+
+    # ── Profile update (partial) ───────────────
+    UserProfileUpdateRequest:
+      type: object
+      description: All fields are optional for PATCH. Provide all fields for PUT.
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        number_type:
+          type: string
+          example: "Service Number BA/BSS"
+        number:
+          type: string
+          example: "BA-12345"
+        rank:
+          type: string
+          enum:
+            - second_lieutenant
+            - lieutenant
+            - captain
+            - major
+            - lieutenant_colonel
+            - colonel
+            - brigadier_general
+            - major_general
+            - lieutenant_general
+            - general
+          example: "major"
+        full_name:
+          type: string
+          example: "John Doe"
+        decoration:
+          type: string
+          example: "MC"
+        course_type:
+          type: string
+          example: "Long Course"
+        course_number:
+          type: string
+          example: "LC-99"
+        retirement_date:
+          type: string
+          format: date
+          example: "2030-12-31"
+        ts_number:
+          type: string
+          example: "TS-9876"
+        address_type:
+          type: string
+          example: "Permanent"
+        phone:
+          type: string
+          example: "+8801711000000"
+        whatsapp_number:
+          type: string
+          example: "+8801711000000"
+        nok_name:
+          type: string
+          example: "Jane Doe"
+        nok_phone:
+          type: string
+          example: "+8801711000001"
+        nok_relation:
+          type: string
+          example: "Spouse"
+
+    # ── Admin creation request ─────────────────
+    AdminCreationRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "admin@example.com"
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          example: "AdminPass@123"
+        number_type:
+          type: string
+          example: "Service Number BA/BSS"
+        number:
+          type: string
+          example: "BA-99999"
+        phone:
+          type: string
+          example: "+8801700000000"
+        whatsapp_number:
+          type: string
+          example: "+8801700000000"
+
+    # ── Admin creation response ────────────────
+    AdminCreationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Admin user created successfully"
+        admin:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "660e8400-e29b-41d4-a716-446655440000"
+            email:
+              type: string
+              format: email
+              example: "admin@example.com"
+            number_type:
+              type: string
+              example: "Service Number BA/BSS"
+            number:
+              type: string
+              example: "BA-99999"
+            phone:
+              type: string
+              example: "+8801700000000"
+            whatsapp_number:
+              type: string
+              example: "+8801700000000"
+            is_active:
+              type: boolean
+              example: true
+            is_staff:
+              type: boolean
+              example: true
+
+    # ── Approval request ───────────────────────
+    UserApprovalRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    # ── Error responses ────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "An error occurred."
+    
+    ValidationErrorResponse:
+      type: object
+      description: Field-level validation errors returned by DRF serializers.
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        email:
+          - "This field is required."
+        password:
+          - "This field may not be blank."
+
+
+# ─────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────
+paths:
+
+  # ── Registration ───────────────────────────
+  /users/register/:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Creates a new user account. The account is set to **inactive** by default 
+        and must be approved by an admin before the user can log in.
+      operationId: userRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+      responses:
+        '201':
+          description: User registered successfully. Awaiting admin approval.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User registered successfully. Please wait for admin approval."
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error (e.g. duplicate email or missing required fields).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  # ── Login ──────────────────────────────────
+  /users/login/:
+    post:
+      tags:
+        - Authentication
+      summary: Login and obtain JWT tokens
+      description: |
+        Authenticates the user with email and password.  
+        Returns a JWT **access_key** (short-lived) and **refresh_key** (long-lived).  
+        Use the `access_key` as a Bearer token in the `Authorization` header for 
+        all protected endpoints.
+      operationId: userLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLoginResponse'
+        '400':
+          description: Invalid credentials or inactive account.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  non_field_errors:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - "Invalid email or password"
+
+  # ── User List ──────────────────────────────
+  /users/list/:
+    get:
+      tags:
+        - Users
+      summary: List all users
+      description: Returns a list of all registered users. Requires authentication.
+      operationId: userList
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: A list of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Authentication credentials were not provided or are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Authentication credentials were not provided."
+
+  # ── Profile (ViewSet via Router) ───────────
+  /users/profile/:
+    get:
+      tags:
+        - Users
+      summary: Retrieve own profile
+      description: Returns the authenticated user's own profile. The result is a list containing only the requesting user's data.
+      operationId: profileList
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/profile/{id}/:
+    get:
+      tags:
+        - Users
+      summary: Retrieve own profile by ID
+      description: Returns the authenticated user's profile by UUID. Users can only access their own profile.
+      operationId: profileRetrieve
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of the user.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Profile retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Profile not found (or belongs to another user).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Users
+      summary: Update own profile (full update)
+      description: |
+        Fully replaces the authenticated user's profile.  
+        All writable fields must be provided. Users cannot update other profiles.
+      operationId: profileUpdate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of the user.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateRequest'
+      responses:
+        '200':
+          description: Profile updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied — cannot update another user's profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Users
+      summary: Partially update own profile
+      description: |
+        Updates one or more fields of the authenticated user's profile.  
+        Only the fields provided in the request body are updated.
+      operationId: profilePartialUpdate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of the user.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateRequest'
+      responses:
+        '200':
+          description: Profile partially updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied — cannot update another user's profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Admin: Approve User ────────────────────
+  /users/approve/:
+    post:
+      tags:
+        - Admin
+      summary: Approve (activate) a user account
+      description: |
+        Activates a pending user account identified by `user_id`.  
+        After activation, the user receives a confirmation email.  
+        **Requires admin/staff privileges.**
+      operationId: userApprove
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserApprovalRequest'
+      responses:
+        '200':
+          description: User approved and activated (or was already active).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User approved and activated successfully"
+                  user_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  email:
+                    type: string
+                    format: email
+                    example: "john.doe@example.com"
+                  is_active:
+                    type: boolean
+                    example: true
+        '400':
+          description: Missing `user_id` in the request body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "user_id is required"
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — caller is not an admin/staff user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+
+  # ── Admin: Create Admin ────────────────────
+  /users/create-admin/:
+    post:
+      tags:
+        - Admin
+      summary: Create a new admin (staff) user
+      description: |
+        Creates a new staff-level user who is immediately active.  
+        The created user has `is_staff: true` and `is_superuser: false`.  
+        **Requires admin/staff privileges.**
+      operationId: adminCreate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreationRequest'
+      responses:
+        '201':
+          description: Admin user created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCreationResponse'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — caller is not an admin/staff user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
