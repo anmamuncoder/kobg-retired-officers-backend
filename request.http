@@ -89,6 +89,7 @@ Content-Type: application/json
 {
   "user_id": "d4eeef37-e887-4651-8dfb-7581095bba4b"
 }
+
 # Expected Response (200 OK):
 # {
 #   "message": "User approved and activated successfully",

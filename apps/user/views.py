@@ -74,6 +74,8 @@ class UserProfileView(ModelViewSet):
 # ----------------------------------------
 # Admin only
 # ----------------------------------------
+from django.core.mail import send_mail
+from django.conf import settings
 
 class UserApprovalView(APIView):
     permission_classes = [IsAdminUser]
@@ -109,6 +111,22 @@ class UserApprovalView(APIView):
         user.is_active = True
         user.save()
         
+        try: 
+            send_mail(
+                subject='Your Account Has Been Approved',
+                message=(
+                    f'Hello {user.number_type} {user.number} {user.full_name} {user.rank},\n\n'
+                    'Your account has been approved by the admin.\n'
+                    'You can now login to the system.\n\n'
+                    'Thank you.'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print("Email failed:", e)
+
         return Response({
             'message': 'User approved and activated successfully',
             'user_id': user.id,
