@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config, Csv
+from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -76,6 +77,9 @@ INSTALLED_APPS = (
     + CUSTOM_APPS
     + INSTALLED_LIBRARY
 )
+
+# Custom user model
+AUTH_USER_MODEL = 'user.User'
 
 
 MIDDLEWARE = [
@@ -214,3 +218,15 @@ REST_FRAMEWORK = {
     # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     # "PAGE_SIZE": 10, # default: eatch page 10 data
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    
+    'AUTH_HEADER_TYPES': ("Bearer",), 
+    'USER_ID_FIELD': "id",
+    'USER_ID_CLAIM': "id",
+    'ROTATE_REFRESH_TOKENS': True, # Issue a new refresh token every time the old one is used
+    'BLACKLIST_AFTER_ROTATION': True, # Old refresh token is blacklisted immediately after rotation
+}
+

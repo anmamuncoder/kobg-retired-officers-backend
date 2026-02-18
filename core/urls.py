@@ -14,8 +14,8 @@ app_name = 'core'
 urlpatterns = (
     [
         path('admin/', admin.site.urls),
-    
     ]
+    + urlpatterns_apps
 )
 
 if settings.DEBUG:

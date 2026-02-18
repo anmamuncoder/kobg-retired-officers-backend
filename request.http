@@ -1,0 +1,129 @@
+# User all list anyone can access with token
+### Get all users 
+GET http://127.0.0.1:8000/users/list/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+
+
+### User Registration
+POST http://127.0.0.1:8000/users/register/
+Content-Type: application/json
+
+{
+  "email": "officer@example.com",
+  "password": "SecurePassword123!",
+  "full_name": "Colonel John Doe",
+  "rank": "colonel",
+  "number": "BA/BSS0014",
+  "number_type": "Service Number BA/BSS",
+  "phone": "+880-1234567890",
+  "whatsapp_number": "+880-1234567890",
+  "course_type": "Military Command",
+  "course_number": "MC-2020",
+  "retirement_date": "2020-06-30",
+  "ts_number": "TS-001",
+  "address_type": "Residential",
+  "nok_name": "Jane Doe",
+  "nok_phone": "+880-9876543210",
+  "nok_relation": "Spouse",
+  "decoration": "Gallantry Award"
+}
+
+
+### User Login
+POST http://127.0.0.1:8000/users/login/
+Content-Type: application/json
+
+{
+  "email": "officer@example.com",
+  "password": "SecurePassword123!"
+}
+
+### User Login
+POST http://127.0.0.1:8000/users/login/
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "123"
+}
+
+# Expected Response (200 OK):
+# {
+#   "message": "Login successful",
+#   "user_id": 1,
+#   "email": "officer@example.com",
+#   "full_name": "Colonel John Doe",
+#   "access_key": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+#   "response_key": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+# }
+
+
+
+
+# -----------------------------------------
+# Profile Change of officer 
+# -----------------------------------------
+### 
+GET http://127.0.0.1:8000/users/profile/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+
+### 
+PATCH http://127.0.0.1:8000/users/profile/1ad7aa31-12d6-48c0-9948-933ab1ff80fc/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+Content-Type: application/json
+
+{
+    "full_name": "AN"
+}
+
+
+
+# -----------------------------------------
+# User Account Approve 
+# -----------------------------------------
+### Approve/Activate User (Admin Only)
+POST http://127.0.0.1:8000/users/approve/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+Content-Type: application/json
+
+{
+  "user_id": "d4eeef37-e887-4651-8dfb-7581095bba4b"
+}
+# Expected Response (200 OK):
+# {
+#   "message": "User approved and activated successfully",
+#   "user_id": "user_id",
+#   "email": "officer@example.com",
+#   "is_active": true
+# }
+
+
+
+### Create Admin User (Admin Only)
+POST http://127.0.0.1:8000/users/create-admin/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+Content-Type: application/json
+
+{
+  "email": "admin.staff2@example.com",
+  "password": "AdminPass123!",
+  "number_type": "Service Number BA/BSS",
+  "number": "BA/BSS-ADMIN-0011",
+  "phone": "+880-2222222222",
+  "whatsapp_number": "+880-2222222222"
+}
+ 
+# Expected Response (201 Created):
+# {
+#   "message": "Admin user created successfully",
+#   "admin": {
+#     "id": "new_user_id",
+#     "email": "admin.staff@example.com",
+#     "number_type": "Service Number BA/BSS",
+#     "number": "BA/BSS-ADMIN-001",
+#     "phone": "+880-2222222222",
+#     "whatsapp_number": "+880-2222222222",
+#     "is_active": true,
+#     "is_staff": true
+#   }
+# }
