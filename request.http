@@ -6,12 +6,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 
 ### User Registration
 POST http://127.0.0.1:8000/users/register/
+###
+POST http://backend.kobg.org/users/register/
 Content-Type: application/json
 
 {
-  "email": "officer@example.com",
+  "email": "anmamuncoder@gmail.com",
   "password": "SecurePassword123!",
-  "full_name": "Colonel John Doe",
+  "full_name": "NUR MOHUMMOD AL MAMUN",
   "rank": "colonel",
   "number": "BA/BSS0014",
   "number_type": "Service Number BA/BSS",
