@@ -21,16 +21,19 @@ class MemoryPhotoSerializer(ModelSerializer):
     class Meta:
         model = MemoryPhoto
         fields = ["id", "image", "captured_at"]
-        read_only_fields = ("id",)
+        read_only_fields = ("id",) 
 
+    def create(self, validated_data):
+        memory = self.context["memory"]
+        return MemoryPhoto.objects.create(memory=memory, **validated_data)
+    
 
 class MemorySerializer(ModelSerializer):
     photos = MemoryPhotoSerializer(many=True, read_only=True)
     tagged_friends = serializers.PrimaryKeyRelatedField(many=True,queryset=User.objects.all(),required=False)
 
     tagged_friends_details = TaggedFriendSerializer(source="tagged_friends",many=True,read_only=True)
-
-
+ 
     class Meta:
         model = Memory
         fields = [

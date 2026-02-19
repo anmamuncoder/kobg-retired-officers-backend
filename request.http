@@ -136,7 +136,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 Content-Type: application/json
 
 {
-  "title": "abvd"
+  "title": "its 2026 and i am retired" 
 }
 
 ###
@@ -145,11 +145,10 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 
 
 ###
-POST http://127.0.0.1:8000/memory/memories/cbd734ba-cf9b-4e4d-9361-e129c5ee9772/photos/
+POST http://127.0.0.1:8000/memory/memories/1c614f8c-796e-4fc6-8cbc-aeac3abf91c7/photos/
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
 Content-Type: application/json
 
-{
-  "image": "",
-  "captured_at": "2024-06-30T12:00:00Z"
+{ 
+  "captured_at": "2024-06-30"
 }

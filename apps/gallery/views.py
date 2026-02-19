@@ -9,6 +9,10 @@ from .serializers import (
     MemorySerializer,
     MemoryPhotoSerializer
 )
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+
 
 class MemoryViewSet(viewsets.ModelViewSet):
     serializer_class = MemorySerializer
@@ -22,21 +26,36 @@ class MemoryViewSet(viewsets.ModelViewSet):
                 return self.queryset
 
             # Normal user sees only his own memories
-            return self.queryset.filter(uploader=user)
-    
+            return self.queryset.filter(uploader=user) 
 
-    @action(detail=True, methods=["post"], url_path="photos")
-    def upload_photos(self, request, pk=None):
-        memory = self.get_object()
-        serializer = MemoryPhotoSerializer(data=request.data)
+
+class MemoryPhotoUploadAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, memory_id):
+        memory = get_object_or_404(Memory, id=memory_id)
+
+        # Permission check
+        if not request.user.is_staff and memory.uploader != request.user:
+            return Response(
+                {"detail": "You cannot upload photos to this memory."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = MemoryPhotoSerializer(
+            data=request.data,
+            context={
+                "request": request,
+                "memory": memory
+            }
+        )
         serializer.is_valid(raise_exception=True)
+        photo = serializer.save()
 
-        images = serializer.validated_data["images"]
-        captured_at = serializer.validated_data.get("captured_at")
-
-        photos = []
-        for img in images:
-            photo = MemoryPhoto.objects.create(memory=memory,image=img,captured_at=captured_at)
-            photos.append(photo)
-
-        return Response({"message": f"{len(photos)} photos uploaded"},status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "message": "Photo uploaded successfully",
+                "photo_id": photo.id
+            },
+            status=status.HTTP_201_CREATED
+        )

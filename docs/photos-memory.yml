@@ -25,9 +25,10 @@ components:
       description: Read-only detailed info of a tagged friend (returned in responses via tagged_friends_details)
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
-          example: 3
+          example: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
         full_name:
           type: string
           example: "John Doe"
@@ -45,9 +46,10 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
-          example: 1
+          example: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
         image:
           type: string
           format: uri
@@ -62,13 +64,14 @@ components:
       type: object
       description: >
         Full memory object returned in responses.
-        `tagged_friends` is write-only (used for input).
+        `tagged_friends` is write-only (used for input as a list of user UUIDs/PKs).
         `tagged_friends_details` is read-only (returned in output with full user info).
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
-          example: 1
+          example: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
         title:
           type: string
           maxLength: 255
@@ -80,7 +83,8 @@ components:
           type: array
           readOnly: true
           description: >
-            Detailed info of each tagged friend. Read-only — use `tagged_friends` (list of PKs) to write.
+            Detailed info of each tagged friend. Read-only — use `tagged_friends`
+            (list of user PKs) to write.
           items:
             $ref: '#/components/schemas/TaggedFriendDetail'
         created_at:
@@ -102,6 +106,7 @@ components:
         Payload for creating or updating a memory.
         Use `tagged_friends` (list of user PKs) to tag friends.
         The response will return friend details under `tagged_friends_details`.
+        `tagged_friends` is write-only and will not appear in responses.
       properties:
         title:
           type: string
@@ -112,9 +117,10 @@ components:
           example: "A wonderful trip to the mountains"
         tagged_friends:
           type: array
+          writeOnly: true
           description: >
-            Write-only. List of user PKs to tag. Pass `[]` to remove all tags.
-            Accepts a single integer or a list of integers.
+            Write-only. List of user PKs to tag. Omit to keep existing tags (PATCH).
+            Pass `[]` to remove all tags.
           items:
             type: integer
           example: [1, 2, 3]
@@ -124,7 +130,11 @@ components:
       properties:
         message:
           type: string
-          example: "3 photos uploaded"
+          example: "Photo uploaded successfully"
+        photo_id:
+          type: string
+          format: uuid
+          example: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
 
     ValidationError:
       type: object
@@ -143,6 +153,13 @@ components:
           type: string
           example: "Not found."
 
+    Forbidden:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "You cannot upload photos to this memory."
+
     Unauthorized:
       type: object
       properties:
@@ -158,9 +175,11 @@ paths:
         - Memories
       summary: List memories
       description: >
-        **Normal users** — returns only their own uploaded memories.
+        **Normal users** — returns only their own uploaded memories
+        (filtered by `uploader=request.user`).
 
-        **Admin / Superuser** (`is_staff` or `is_superuser`) — returns all memories across all users.
+        **Admin / Superuser** (`is_staff` or `is_superuser`) — returns all memories
+        across all users.
 
         Each memory includes `tagged_friends_details` with full user info of tagged friends.
       responses:
@@ -173,23 +192,23 @@ paths:
                 items:
                   $ref: '#/components/schemas/Memory'
               example:
-                - id: 1
+                - id: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
                   title: "Birthday Party"
                   description: "John's surprise party"
                   tagged_friends_details:
-                    - id: 2
+                    - id: "4f2504e0-4f89-11d3-9a0c-0305e82c3302"
                       full_name: "Jane Smith"
                       number: "+8801712345678"
                       number_type: "mobile"
                       rank: "Lieutenant"
-                    - id: 3
+                    - id: "5f2504e0-4f89-11d3-9a0c-0305e82c3303"
                       full_name: "Bob Lee"
                       number: "+8801812345678"
                       number_type: "mobile"
                       rank: "Sergeant"
                   created_at: "2024-06-15T10:00:00Z"
                   photos:
-                    - id: 1
+                    - id: "6f2504e0-4f89-11d3-9a0c-0305e82c3304"
                       image: "https://example.com/media/memories/photo1.jpg"
                       captured_at: "2024-06-15T10:30:00Z"
         '401':
@@ -208,6 +227,8 @@ paths:
 
         Use `tagged_friends` (list of integer PKs) to tag friends.
         Response will include `tagged_friends_details` with full user objects.
+
+        `tagged_friends` is write-only and will not appear in responses.
       requestBody:
         required: true
         content:
@@ -240,16 +261,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Memory'
               example:
-                id: 5
+                id: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
                 title: "Road Trip"
                 description: "Weekend road trip with the crew"
                 tagged_friends_details:
-                  - id: 1
+                  - id: "4f2504e0-4f89-11d3-9a0c-0305e82c3302"
                     full_name: "Alice"
                     number: "+8801711111111"
                     number_type: "mobile"
                     rank: "Major"
-                  - id: 2
+                  - id: "5f2504e0-4f89-11d3-9a0c-0305e82c3303"
                     full_name: "Bob"
                     number: "+8801722222222"
                     number_type: "mobile"
@@ -274,10 +295,11 @@ paths:
       - name: id
         in: path
         required: true
-        description: Primary key of the memory
+        description: UUID primary key of the memory
         schema:
-          type: integer
-          example: 1
+          type: string
+          format: uuid
+          example: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
 
     get:
       tags:
@@ -286,7 +308,8 @@ paths:
       description: >
         Returns a single memory with nested `photos` and `tagged_friends_details`.
 
-        **Normal users** can only access their own memories — others return `404`.
+        **Normal users** can only access their own memories — others return `404`
+        because the queryset is filtered to `uploader=request.user`.
 
         **Admin / Superuser** can access any memory.
       responses:
@@ -297,18 +320,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Memory'
               example:
-                id: 1
+                id: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
                 title: "Summer Vacation 2024"
                 description: "A wonderful trip to the mountains"
                 tagged_friends_details:
-                  - id: 2
+                  - id: "4f2504e0-4f89-11d3-9a0c-0305e82c3302"
                     full_name: "Jane Smith"
                     number: "+8801712345678"
                     number_type: "mobile"
                     rank: "Lieutenant"
                 created_at: "2024-06-15T10:00:00Z"
                 photos:
-                  - id: 1
+                  - id: "5f2504e0-4f89-11d3-9a0c-0305e82c3303"
                     image: "https://example.com/media/memories/photo1.jpg"
                     captured_at: "2024-06-15T10:30:00Z"
         '401':
@@ -331,11 +354,12 @@ paths:
       description: >
         Fully replaces all writable fields of a memory.
 
-        **Normal users** can only update their own memories.
+        **Normal users** can only update their own memories (others return `404`).
 
         **Admin / Superuser** can update any memory.
 
         Pass `tagged_friends: []` to remove all tags.
+        `tagged_friends` is write-only and will not appear in responses.
       requestBody:
         required: true
         content:
@@ -388,12 +412,13 @@ paths:
       description: >
         Updates only the provided fields. Omitted fields remain unchanged.
 
-        **Normal users** can only update their own memories.
+        **Normal users** can only update their own memories (others return `404`).
 
         **Admin / Superuser** can update any memory.
 
         If `tagged_friends` is omitted, existing tags are preserved.
         Pass `tagged_friends: []` to remove all tags.
+        `tagged_friends` is write-only and will not appear in responses.
       requestBody:
         required: false
         content:
@@ -446,7 +471,7 @@ paths:
       description: >
         Deletes a memory and all its associated `MemoryPhoto` records (CASCADE).
 
-        **Normal users** can only delete their own memories.
+        **Normal users** can only delete their own memories (others return `404`).
 
         **Admin / Superuser** can delete any memory.
       responses:
@@ -465,30 +490,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotFound'
 
-  /memory/memories/{id}/photos/:
+  /memory/memories/{memory_id}/photos/:
     parameters:
-      - name: id
+      - name: memory_id
         in: path
         required: true
-        description: Primary key of the memory to upload photos to
+        description: UUID primary key of the memory to upload a photo to
         schema:
-          type: integer
-          example: 1
+          type: string
+          format: uuid
+          example: "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
 
     post:
       tags:
         - Memory Photos
-      summary: Upload photos to a memory
+      summary: Upload a single photo to a memory
       description: >
-        Uploads one or more photos to a specific memory using `multipart/form-data`.
+        Uploads one photo to a specific memory using `multipart/form-data`.
 
-        Each image is saved as a separate `MemoryPhoto` record linked to the memory.
+        The image is saved as a `MemoryPhoto` record linked to the memory.
 
-        All images in a single request share the same `captured_at` timestamp.
+        **Normal users** can only upload to their own memories.
+        Attempting to upload to another user's memory returns `403 Forbidden`.
 
-        **Normal users** can only upload to their own memories — other IDs return `404`.
+        **Admin / Superuser** (`is_staff`) can upload to any memory.
 
-        **Admin / Superuser** can upload to any memory.
+        > **Note:** This endpoint accepts a single image per request.
+        > Submit multiple requests to upload multiple photos.
       requestBody:
         required: true
         content:
@@ -496,41 +524,32 @@ paths:
             schema:
               type: object
               required:
-                - images
+                - image
               properties:
-                images:
-                  type: array
-                  description: One or more image files to upload
-                  items:
-                    type: string
-                    format: binary
+                image:
+                  type: string
+                  format: binary
+                  description: A single image file to upload (JPEG, PNG, or WebP)
                 captured_at:
                   type: string
                   format: date-time
                   nullable: true
                   description: >
-                    Date and time when the photos were captured.
-                    Applied to all images in this request.
+                    Date and time when the photo was captured. Optional.
                   example: "2024-06-15T10:30:00Z"
             encoding:
-              images:
+              image:
                 contentType: image/png, image/jpeg, image/webp
       responses:
         '201':
-          description: Photos uploaded successfully
+          description: Photo uploaded successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PhotoUploadSuccess'
-              examples:
-                single:
-                  summary: One photo uploaded
-                  value:
-                    message: "1 photos uploaded"
-                multiple:
-                  summary: Multiple photos uploaded
-                  value:
-                    message: "4 photos uploaded"
+              example:
+                message: "Photo uploaded successfully"
+                photo_id: "6f2504e0-4f89-11d3-9a0c-0305e82c3304"
         '400':
           description: Validation error
           content:
@@ -538,15 +557,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
               example:
-                images: ["No file was submitted."]
+                image: ["No file was submitted."]
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
+        '403':
+          description: Forbidden — memory belongs to a different user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forbidden'
         '404':
-          description: Memory not found or not owned by requesting user
+          description: Memory not found
           content:
             application/json:
               schema:
