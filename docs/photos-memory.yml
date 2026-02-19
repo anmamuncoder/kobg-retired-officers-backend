@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Gallery Memory API
   description: API for managing memories and memory photos
-  version: 1.3.0
+  version: 1.4.0
 
 servers:
   - url: /memory
@@ -20,19 +20,26 @@ components:
 
   schemas:
 
-    TaggedFriends:
-      description: >
-        Accepts a single user primary key (integer) or a list of user primary keys.
-        Both formats are accepted. Always returned as a list in responses.
-      oneOf:
-        - type: integer
-          description: Single user PK
+    TaggedFriendDetail:
+      type: object
+      description: Read-only detailed info of a tagged friend (returned in responses via tagged_friends_details)
+      properties:
+        id:
+          type: integer
+          readOnly: true
           example: 3
-        - type: array
-          description: List of user PKs
-          items:
-            type: integer
-          example: [1, 2, 3]
+        full_name:
+          type: string
+          example: "John Doe"
+        number:
+          type: string
+          example: "+8801712345678"
+        number_type:
+          type: string
+          example: "mobile"
+        rank:
+          type: string
+          example: "Captain"
 
     MemoryPhoto:
       type: object
@@ -53,6 +60,10 @@ components:
 
     Memory:
       type: object
+      description: >
+        Full memory object returned in responses.
+        `tagged_friends` is write-only (used for input).
+        `tagged_friends_details` is read-only (returned in output with full user info).
       properties:
         id:
           type: integer
@@ -65,12 +76,13 @@ components:
         description:
           type: string
           example: "A wonderful trip to the mountains"
-        tagged_friends:
+        tagged_friends_details:
           type: array
-          description: List of tagged user PKs. Always returned as a list.
+          readOnly: true
+          description: >
+            Detailed info of each tagged friend. Read-only — use `tagged_friends` (list of PKs) to write.
           items:
-            type: integer
-          example: [2, 5]
+            $ref: '#/components/schemas/TaggedFriendDetail'
         created_at:
           type: string
           format: date-time
@@ -86,6 +98,10 @@ components:
       type: object
       required:
         - title
+      description: >
+        Payload for creating or updating a memory.
+        Use `tagged_friends` (list of user PKs) to tag friends.
+        The response will return friend details under `tagged_friends_details`.
       properties:
         title:
           type: string
@@ -95,7 +111,13 @@ components:
           type: string
           example: "A wonderful trip to the mountains"
         tagged_friends:
-          $ref: '#/components/schemas/TaggedFriends'
+          type: array
+          description: >
+            Write-only. List of user PKs to tag. Pass `[]` to remove all tags.
+            Accepts a single integer or a list of integers.
+          items:
+            type: integer
+          example: [1, 2, 3]
 
     PhotoUploadSuccess:
       type: object
@@ -136,9 +158,11 @@ paths:
         - Memories
       summary: List memories
       description: >
-        **Normal users** — returns only their own uploaded memories (`uploader = request.user`).
+        **Normal users** — returns only their own uploaded memories.
 
         **Admin / Superuser** (`is_staff` or `is_superuser`) — returns all memories across all users.
+
+        Each memory includes `tagged_friends_details` with full user info of tagged friends.
       responses:
         '200':
           description: List of memories
@@ -148,31 +172,26 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Memory'
-              examples:
-                normal_user:
-                  summary: Normal user (own memories only)
-                  value:
-                    - id: 1
-                      title: "My Birthday"
-                      description: "Personal birthday memory"
-                      tagged_friends: [2, 4]
-                      created_at: "2024-06-15T10:00:00Z"
-                      photos: []
-                admin_user:
-                  summary: Admin (all memories)
-                  value:
-                    - id: 1
-                      title: "My Birthday"
-                      description: "Belongs to user A"
-                      tagged_friends: [2]
-                      created_at: "2024-06-15T10:00:00Z"
-                      photos: []
+              example:
+                - id: 1
+                  title: "Birthday Party"
+                  description: "John's surprise party"
+                  tagged_friends_details:
                     - id: 2
-                      title: "Road Trip"
-                      description: "Belongs to user B"
-                      tagged_friends: []
-                      created_at: "2024-06-16T08:00:00Z"
-                      photos: []
+                      full_name: "Jane Smith"
+                      number: "+8801712345678"
+                      number_type: "mobile"
+                      rank: "Lieutenant"
+                    - id: 3
+                      full_name: "Bob Lee"
+                      number: "+8801812345678"
+                      number_type: "mobile"
+                      rank: "Sergeant"
+                  created_at: "2024-06-15T10:00:00Z"
+                  photos:
+                    - id: 1
+                      image: "https://example.com/media/memories/photo1.jpg"
+                      captured_at: "2024-06-15T10:30:00Z"
         '401':
           description: Unauthorized
           content:
@@ -185,9 +204,10 @@ paths:
         - Memories
       summary: Create a new memory
       description: >
-        Creates a memory. The `uploader` is automatically set to `request.user` — it cannot be set manually.
+        Creates a memory. The `uploader` is automatically set to `request.user`.
 
-        `tagged_friends` is optional. Accepts a single user PK (integer) or a list of PKs.
+        Use `tagged_friends` (list of integer PKs) to tag friends.
+        Response will include `tagged_friends_details` with full user objects.
       requestBody:
         required: true
         content:
@@ -200,7 +220,7 @@ paths:
                 value:
                   title: "Birthday Party"
                   description: "John's surprise birthday party"
-                  tagged_friends: 3
+                  tagged_friends: [3]
               multiple_tags:
                 summary: Tag multiple friends
                 value:
@@ -219,6 +239,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Memory'
+              example:
+                id: 5
+                title: "Road Trip"
+                description: "Weekend road trip with the crew"
+                tagged_friends_details:
+                  - id: 1
+                    full_name: "Alice"
+                    number: "+8801711111111"
+                    number_type: "mobile"
+                    rank: "Major"
+                  - id: 2
+                    full_name: "Bob"
+                    number: "+8801722222222"
+                    number_type: "mobile"
+                    rank: "Captain"
+                created_at: "2024-06-20T09:00:00Z"
+                photos: []
         '400':
           description: Validation error
           content:
@@ -247,9 +284,9 @@ paths:
         - Memories
       summary: Retrieve a memory
       description: >
-        Returns a single memory with its nested `photos` and `tagged_friends`.
+        Returns a single memory with nested `photos` and `tagged_friends_details`.
 
-        **Normal users** can only access their own memories — other memories return `404`.
+        **Normal users** can only access their own memories — others return `404`.
 
         **Admin / Superuser** can access any memory.
       responses:
@@ -263,7 +300,12 @@ paths:
                 id: 1
                 title: "Summer Vacation 2024"
                 description: "A wonderful trip to the mountains"
-                tagged_friends: [2, 5]
+                tagged_friends_details:
+                  - id: 2
+                    full_name: "Jane Smith"
+                    number: "+8801712345678"
+                    number_type: "mobile"
+                    rank: "Lieutenant"
                 created_at: "2024-06-15T10:00:00Z"
                 photos:
                   - id: 1
@@ -276,7 +318,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
         '404':
-          description: Memory not found or not owned by the requesting user
+          description: Memory not found or not owned by requesting user
           content:
             application/json:
               schema:
@@ -293,7 +335,7 @@ paths:
 
         **Admin / Superuser** can update any memory.
 
-        Passing `tagged_friends: []` removes all tagged friends.
+        Pass `tagged_friends: []` to remove all tags.
       requestBody:
         required: true
         content:
@@ -302,7 +344,7 @@ paths:
               $ref: '#/components/schemas/MemoryCreate'
             examples:
               full_update:
-                summary: Full update with multiple tags
+                summary: Full update with tags
                 value:
                   title: "Updated Title"
                   description: "Updated description"
@@ -351,7 +393,7 @@ paths:
         **Admin / Superuser** can update any memory.
 
         If `tagged_friends` is omitted, existing tags are preserved.
-        Passing `tagged_friends: []` removes all tags.
+        Pass `tagged_friends: []` to remove all tags.
       requestBody:
         required: false
         content:
@@ -444,7 +486,7 @@ paths:
 
         All images in a single request share the same `captured_at` timestamp.
 
-        **Normal users** can only upload to their own memories — other memory IDs return `404`.
+        **Normal users** can only upload to their own memories — other IDs return `404`.
 
         **Admin / Superuser** can upload to any memory.
       requestBody:
@@ -468,7 +510,7 @@ paths:
                   nullable: true
                   description: >
                     Date and time when the photos were captured.
-                    Shared across all uploaded images in this request.
+                    Applied to all images in this request.
                   example: "2024-06-15T10:30:00Z"
             encoding:
               images:
@@ -490,7 +532,7 @@ paths:
                   value:
                     message: "4 photos uploaded"
         '400':
-          description: Validation error (e.g. missing image field)
+          description: Validation error
           content:
             application/json:
               schema:
@@ -504,7 +546,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Unauthorized'
         '404':
-          description: Memory not found or not owned by the requesting user
+          description: Memory not found or not owned by requesting user
           content:
             application/json:
               schema:

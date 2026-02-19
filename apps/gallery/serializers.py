@@ -5,6 +5,18 @@ from .models import Memory, MemoryPhoto
 
 from apps.user.models import User
 
+
+class TaggedFriendSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "full_name",
+            "number",
+            "number_type",
+            "rank",
+        ]
+
 class MemoryPhotoSerializer(ModelSerializer):
     class Meta:
         model = MemoryPhoto
@@ -16,13 +28,17 @@ class MemorySerializer(ModelSerializer):
     photos = MemoryPhotoSerializer(many=True, read_only=True)
     tagged_friends = serializers.PrimaryKeyRelatedField(many=True,queryset=User.objects.all(),required=False)
 
+    tagged_friends_details = TaggedFriendSerializer(source="tagged_friends",many=True,read_only=True)
+
+
     class Meta:
         model = Memory
         fields = [
             "id",
             "title",
             "description",
-            "tagged_friends",
+            "tagged_friends",  # write-only
+            "tagged_friends_details", # read-only
             "created_at",
             "photos"
         ]
