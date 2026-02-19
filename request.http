@@ -1,8 +1,7 @@
 # User all list anyone can access with token
 ### Get all users 
 GET http://127.0.0.1:8000/users/list/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
 
 ### User Registration
 POST http://127.0.0.1:8000/users/register/
@@ -130,3 +129,27 @@ Content-Type: application/json
 #     "is_staff": true
 #   }
 # }
+
+###
+POST http://127.0.0.1:8000/memory/memories/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
+Content-Type: application/json
+
+{
+  "title": "abvd"
+}
+
+###
+GET http://127.0.0.1:8000/memory/memories/3baf70f6-988d-4a90-90fa-b95e3d057913/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
+
+
+###
+POST http://127.0.0.1:8000/memory/memories/cbd734ba-cf9b-4e4d-9361-e129c5ee9772/photos/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
+Content-Type: application/json
+
+{
+  "image": "",
+  "captured_at": "2024-06-30T12:00:00Z"
+}

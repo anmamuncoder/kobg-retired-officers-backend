@@ -7,7 +7,7 @@ urlpatterns_apps = [
     path('users/', include('apps.user.urls')),
     path('officer/', include('apps.officer.urls')),
     path('notice/', include('apps.notice.urls')),
-    path('gallery/', include('apps.gallery.urls')),
+    path('memory/', include('apps.gallery.urls')),
 ]
 
 app_name = 'core'

@@ -1,0 +1,511 @@
+openapi: 3.0.3
+info:
+  title: Gallery Memory API
+  description: API for managing memories and memory photos
+  version: 1.3.0
+
+servers:
+  - url: /memory
+    description: Gallery base path
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TaggedFriends:
+      description: >
+        Accepts a single user primary key (integer) or a list of user primary keys.
+        Both formats are accepted. Always returned as a list in responses.
+      oneOf:
+        - type: integer
+          description: Single user PK
+          example: 3
+        - type: array
+          description: List of user PKs
+          items:
+            type: integer
+          example: [1, 2, 3]
+
+    MemoryPhoto:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        image:
+          type: string
+          format: uri
+          example: "https://example.com/media/memories/user_1/photo.jpg"
+        captured_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-06-15T10:30:00Z"
+
+    Memory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        title:
+          type: string
+          maxLength: 255
+          example: "Summer Vacation 2024"
+        description:
+          type: string
+          example: "A wonderful trip to the mountains"
+        tagged_friends:
+          type: array
+          description: List of tagged user PKs. Always returned as a list.
+          items:
+            type: integer
+          example: [2, 5]
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          example: "2024-06-15T10:00:00Z"
+        photos:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/MemoryPhoto'
+
+    MemoryCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          example: "Summer Vacation 2024"
+        description:
+          type: string
+          example: "A wonderful trip to the mountains"
+        tagged_friends:
+          $ref: '#/components/schemas/TaggedFriends'
+
+    PhotoUploadSuccess:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "3 photos uploaded"
+
+    ValidationError:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        title: ["This field is required."]
+        image: ["No file was submitted."]
+
+    NotFound:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Not found."
+
+    Unauthorized:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Authentication credentials were not provided."
+
+paths:
+
+  /memory/memories/:
+    get:
+      tags:
+        - Memories
+      summary: List memories
+      description: >
+        **Normal users** — returns only their own uploaded memories (`uploader = request.user`).
+
+        **Admin / Superuser** (`is_staff` or `is_superuser`) — returns all memories across all users.
+      responses:
+        '200':
+          description: List of memories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Memory'
+              examples:
+                normal_user:
+                  summary: Normal user (own memories only)
+                  value:
+                    - id: 1
+                      title: "My Birthday"
+                      description: "Personal birthday memory"
+                      tagged_friends: [2, 4]
+                      created_at: "2024-06-15T10:00:00Z"
+                      photos: []
+                admin_user:
+                  summary: Admin (all memories)
+                  value:
+                    - id: 1
+                      title: "My Birthday"
+                      description: "Belongs to user A"
+                      tagged_friends: [2]
+                      created_at: "2024-06-15T10:00:00Z"
+                      photos: []
+                    - id: 2
+                      title: "Road Trip"
+                      description: "Belongs to user B"
+                      tagged_friends: []
+                      created_at: "2024-06-16T08:00:00Z"
+                      photos: []
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+
+    post:
+      tags:
+        - Memories
+      summary: Create a new memory
+      description: >
+        Creates a memory. The `uploader` is automatically set to `request.user` — it cannot be set manually.
+
+        `tagged_friends` is optional. Accepts a single user PK (integer) or a list of PKs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryCreate'
+            examples:
+              single_tag:
+                summary: Tag a single friend
+                value:
+                  title: "Birthday Party"
+                  description: "John's surprise birthday party"
+                  tagged_friends: 3
+              multiple_tags:
+                summary: Tag multiple friends
+                value:
+                  title: "Road Trip"
+                  description: "Weekend road trip with the crew"
+                  tagged_friends: [1, 2, 3]
+              no_tags:
+                summary: No tagged friends
+                value:
+                  title: "Solo Hike"
+                  description: "Early morning hike at the national park"
+      responses:
+        '201':
+          description: Memory created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memory'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+
+  /memory/memories/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Primary key of the memory
+        schema:
+          type: integer
+          example: 1
+
+    get:
+      tags:
+        - Memories
+      summary: Retrieve a memory
+      description: >
+        Returns a single memory with its nested `photos` and `tagged_friends`.
+
+        **Normal users** can only access their own memories — other memories return `404`.
+
+        **Admin / Superuser** can access any memory.
+      responses:
+        '200':
+          description: Memory detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memory'
+              example:
+                id: 1
+                title: "Summer Vacation 2024"
+                description: "A wonderful trip to the mountains"
+                tagged_friends: [2, 5]
+                created_at: "2024-06-15T10:00:00Z"
+                photos:
+                  - id: 1
+                    image: "https://example.com/media/memories/photo1.jpg"
+                    captured_at: "2024-06-15T10:30:00Z"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Memory not found or not owned by the requesting user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+
+    put:
+      tags:
+        - Memories
+      summary: Full update a memory
+      description: >
+        Fully replaces all writable fields of a memory.
+
+        **Normal users** can only update their own memories.
+
+        **Admin / Superuser** can update any memory.
+
+        Passing `tagged_friends: []` removes all tagged friends.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryCreate'
+            examples:
+              full_update:
+                summary: Full update with multiple tags
+                value:
+                  title: "Updated Title"
+                  description: "Updated description"
+                  tagged_friends: [1, 2]
+              clear_tags:
+                summary: Remove all tagged friends
+                value:
+                  title: "Updated Title"
+                  description: "Updated description"
+                  tagged_friends: []
+      responses:
+        '200':
+          description: Memory updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memory'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+
+    patch:
+      tags:
+        - Memories
+      summary: Partial update a memory
+      description: >
+        Updates only the provided fields. Omitted fields remain unchanged.
+
+        **Normal users** can only update their own memories.
+
+        **Admin / Superuser** can update any memory.
+
+        If `tagged_friends` is omitted, existing tags are preserved.
+        Passing `tagged_friends: []` removes all tags.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryCreate'
+            examples:
+              title_only:
+                summary: Update title only
+                value:
+                  title: "New Title"
+              update_tags:
+                summary: Update tagged friends only
+                value:
+                  tagged_friends: [3, 4]
+              clear_tags:
+                summary: Remove all tagged friends
+                value:
+                  tagged_friends: []
+      responses:
+        '200':
+          description: Memory updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Memory'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+
+    delete:
+      tags:
+        - Memories
+      summary: Delete a memory
+      description: >
+        Deletes a memory and all its associated `MemoryPhoto` records (CASCADE).
+
+        **Normal users** can only delete their own memories.
+
+        **Admin / Superuser** can delete any memory.
+      responses:
+        '204':
+          description: Memory deleted successfully (no content)
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+
+  /memory/memories/{id}/photos/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Primary key of the memory to upload photos to
+        schema:
+          type: integer
+          example: 1
+
+    post:
+      tags:
+        - Memory Photos
+      summary: Upload photos to a memory
+      description: >
+        Uploads one or more photos to a specific memory using `multipart/form-data`.
+
+        Each image is saved as a separate `MemoryPhoto` record linked to the memory.
+
+        All images in a single request share the same `captured_at` timestamp.
+
+        **Normal users** can only upload to their own memories — other memory IDs return `404`.
+
+        **Admin / Superuser** can upload to any memory.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  description: One or more image files to upload
+                  items:
+                    type: string
+                    format: binary
+                captured_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: >
+                    Date and time when the photos were captured.
+                    Shared across all uploaded images in this request.
+                  example: "2024-06-15T10:30:00Z"
+            encoding:
+              images:
+                contentType: image/png, image/jpeg, image/webp
+      responses:
+        '201':
+          description: Photos uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoUploadSuccess'
+              examples:
+                single:
+                  summary: One photo uploaded
+                  value:
+                    message: "1 photos uploaded"
+                multiple:
+                  summary: Multiple photos uploaded
+                  value:
+                    message: "4 photos uploaded"
+        '400':
+          description: Validation error (e.g. missing image field)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                images: ["No file was submitted."]
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Memory not found or not owned by the requesting user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
