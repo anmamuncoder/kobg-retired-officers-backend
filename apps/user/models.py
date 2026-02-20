@@ -31,6 +31,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     number_type = models.CharField(max_length=50, default='Service Number BA/BSS', blank=True, null=True)
     number = models.CharField(max_length=50, unique=True , blank=True, null=True)
     rank = models.CharField(max_length=50, choices=RANKS, blank=True, null=True)
+    photo = models.ImageField(upload_to='user_photos/', blank=True, null=True)
 
     full_name = models.CharField(max_length=150, blank=True, null=True)
     decoration = models.CharField(max_length=100, blank=True, null=True)
@@ -43,6 +44,13 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     # ADDRESS
     address_type = models.CharField(max_length=50, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    division = models.CharField(max_length=100, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    upazila_thana = models.CharField(max_length=100, blank=True, null=True)
+    street_address = models.CharField(max_length=255, blank=True, null=True)
+    present_address = models.CharField(max_length=255, blank=True, null=True)
+    permanent_address = models.CharField(max_length=255, blank=True, null=True)
 
     # CONTACT
     phone = models.CharField(max_length=20, blank=True, null=True)

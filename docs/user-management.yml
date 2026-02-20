@@ -88,6 +88,7 @@ components:
         full_name:
           type: string
           example: "John Doe"
+          nullable: true
         decoration:
           type: string
           example: "MC"
@@ -113,6 +114,34 @@ components:
           type: string
           example: "Permanent"
           nullable: true
+        country:
+          type: string
+          example: "Bangladesh"
+          nullable: true
+        division:
+          type: string
+          example: "Dhaka"
+          nullable: true
+        district:
+          type: string
+          example: "Dhaka"
+          nullable: true
+        upazila_thana:
+          type: string
+          example: "Dhanmondi"
+          nullable: true
+        street_address:
+          type: string
+          example: "House 12, Road 5"
+          nullable: true
+        present_address:
+          type: string
+          example: "House 12, Road 5, Dhanmondi, Dhaka"
+          nullable: true
+        permanent_address:
+          type: string
+          example: "Village: Karimpur, PO: Karimpur, Dist: Sylhet"
+          nullable: true
         phone:
           type: string
           example: "+8801711000000"
@@ -137,6 +166,10 @@ components:
           type: boolean
           readOnly: true
           example: false
+        is_active:
+          type: boolean
+          readOnly: true
+          example: true
 
     # ── Registration request ───────────────────
     UserRegistrationRequest:
@@ -196,6 +229,27 @@ components:
         address_type:
           type: string
           example: "Permanent"
+        country:
+          type: string
+          example: "Bangladesh"
+        division:
+          type: string
+          example: "Dhaka"
+        district:
+          type: string
+          example: "Dhaka"
+        upazila_thana:
+          type: string
+          example: "Dhanmondi"
+        street_address:
+          type: string
+          example: "House 12, Road 5"
+        present_address:
+          type: string
+          example: "House 12, Road 5, Dhanmondi, Dhaka"
+        permanent_address:
+          type: string
+          example: "Village: Karimpur, PO: Karimpur, Dist: Sylhet"
         phone:
           type: string
           example: "+8801711000000"
@@ -256,7 +310,7 @@ components:
           type: boolean
           example: false
 
-    # ── Profile update (partial) ───────────────
+    # ── Profile update (partial or full) ───────
     UserProfileUpdateRequest:
       type: object
       description: All fields are optional for PATCH. Provide all fields for PUT.
@@ -307,6 +361,27 @@ components:
         address_type:
           type: string
           example: "Permanent"
+        country:
+          type: string
+          example: "Bangladesh"
+        division:
+          type: string
+          example: "Dhaka"
+        district:
+          type: string
+          example: "Dhaka"
+        upazila_thana:
+          type: string
+          example: "Dhanmondi"
+        street_address:
+          type: string
+          example: "House 12, Road 5"
+        present_address:
+          type: string
+          example: "House 12, Road 5, Dhanmondi, Dhaka"
+        permanent_address:
+          type: string
+          example: "Village: Karimpur, PO: Karimpur, Dist: Sylhet"
         phone:
           type: string
           example: "+8801711000000"
@@ -407,7 +482,7 @@ components:
         error:
           type: string
           example: "An error occurred."
-    
+
     ValidationErrorResponse:
       type: object
       description: Field-level validation errors returned by DRF serializers.
@@ -434,8 +509,8 @@ paths:
         - Authentication
       summary: Register a new user
       description: |
-        Creates a new user account. The account is set to **inactive** by default 
-        and must be approved by an admin before the user can log in.
+        Creates a new user account. The account is set to **inactive** (`is_active: false`)
+        by default and must be approved by an admin before the user can log in.
       operationId: userRegister
       requestBody:
         required: true
@@ -473,7 +548,9 @@ paths:
         Authenticates the user with email and password.  
         Returns a JWT **access_key** (short-lived) and **refresh_key** (long-lived).  
         Use the `access_key` as a Bearer token in the `Authorization` header for 
-        all protected endpoints.
+        all protected endpoints.  
+        Returns a `400` error if credentials are invalid **or** if the account 
+        is inactive (pending admin approval).
       operationId: userLogin
       requestBody:
         required: true
@@ -536,7 +613,9 @@ paths:
       tags:
         - Users
       summary: Retrieve own profile
-      description: Returns the authenticated user's own profile. The result is a list containing only the requesting user's data.
+      description: |
+        Returns the authenticated user's own profile.  
+        The result is a list containing only the requesting user's data.
       operationId: profileList
       security:
         - BearerAuth: []
@@ -599,7 +678,8 @@ paths:
       summary: Update own profile (full update)
       description: |
         Fully replaces the authenticated user's profile.  
-        All writable fields must be provided. Users cannot update other profiles.
+        All writable fields must be provided. Users cannot update other profiles.  
+        `id`, `is_staff`, and `is_active` are read-only and will be ignored if sent.
       operationId: profileUpdate
       security:
         - BearerAuth: []
@@ -655,7 +735,8 @@ paths:
       summary: Partially update own profile
       description: |
         Updates one or more fields of the authenticated user's profile.  
-        Only the fields provided in the request body are updated.
+        Only the fields provided in the request body are updated.  
+        `id`, `is_staff`, and `is_active` are read-only and will be ignored if sent.
       operationId: profilePartialUpdate
       security:
         - BearerAuth: []
@@ -786,8 +867,10 @@ paths:
         - Admin
       summary: Create a new admin (staff) user
       description: |
-        Creates a new staff-level user who is immediately active.  
+        Creates a new staff-level user who is immediately active (`is_active: true`).  
         The created user has `is_staff: true` and `is_superuser: false`.  
+        Only the fields accepted by `AdminCreationSerializer` are used:
+        `email`, `password`, `number_type`, `number`, `phone`, `whatsapp_number`.  
         **Requires admin/staff privileges.**
       operationId: adminCreate
       security:

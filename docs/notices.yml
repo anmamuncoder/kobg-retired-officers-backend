@@ -1,0 +1,331 @@
+openapi: 3.0.3
+
+info:
+  title: Message API
+  description: |
+    REST API for internal messaging between officers and admins.
+
+    ## Role-based access
+
+    | Method | Officer | Admin |
+    |--------|---------|-------|
+    | `GET /messages/` | ✅ Own messages only | ✅ All messages |
+    | `GET /messages/{id}/` | ✅ Own messages only | ✅ Any message |
+    | `POST /messages/` | ✅ Send a message | ❌ |
+    | `PATCH /messages/{id}/mark-read/` | ❌ | ✅ |
+    | `PUT` / `DELETE` | ❌ | ❌ |
+
+    `sender` is set automatically from the JWT token — do **not** pass it in the request body.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development server
+  - url: https://your-domain.com
+    description: Production server
+
+tags:
+  - name: Messages
+    description: Message operations
+
+# ─────────────────────────────────────────────
+# SECURITY
+# ─────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /users/login/.
+
+  # ─────────────────────────────────────────────
+  # SCHEMAS
+  # ─────────────────────────────────────────────
+  schemas:
+
+    # ── Message (read) ─────────────────────────
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          example: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
+        subject:
+          type: string
+          example: "Profile Correction"
+        body:
+          type: string
+          example: "My joining date is incorrect. Please update it."
+        is_read:
+          type: boolean
+          readOnly: true
+          description: Set to true by admin via the mark-read action. Cannot be set by the sender.
+          example: false
+        sender:
+          type: string
+          format: uuid
+          readOnly: true
+          description: UUID of the officer who sent the message. Auto-set from JWT token.
+          example: "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          example: "2026-02-20T09:30:00Z"
+
+    # ── Message write (POST) ───────────────────
+    MessageRequest:
+      type: object
+      required:
+        - subject
+        - body
+      properties:
+        subject:
+          type: string
+          maxLength: 255
+          example: "Profile Correction"
+        body:
+          type: string
+          example: "My joining date is incorrect. Please update it."
+
+    # ── Mark-read response ─────────────────────
+    MarkReadResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Message marked as read"
+
+    # ── Errors ─────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Authentication credentials were not provided."
+
+    ValidationErrorResponse:
+      type: object
+      description: Field-level validation errors.
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        subject:
+          - "This field is required."
+        body:
+          - "This field may not be blank."
+
+
+# ─────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────
+paths:
+
+  # ── List / Create ──────────────────────────
+  /message/messages/:
+    get:
+      tags:
+        - Messages
+      summary: List messages
+      description: |
+        Returns a list of messages ordered newest first.
+
+        - **Officer** — returns only messages sent by the authenticated user.
+        - **Admin** — returns all messages from all users.
+
+        > **Permission:** Officer (own) · Admin (all)
+      operationId: messageList
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of messages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+              example:
+                - id: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
+                  subject: "Profile Correction"
+                  body: "My joining date is incorrect."
+                  is_read: false
+                  sender: "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+                  created_at: "2026-02-20T09:30:00Z"
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Messages
+      summary: Send a message
+      description: |
+        Creates a new message. The `sender` field is automatically set from
+        the authenticated user's JWT token — do **not** include it in the body.
+
+        > **Permission:** Officer only. Admins cannot POST.
+      operationId: messageCreate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+            example:
+              subject: "Profile Correction 2"
+              body: "My joining date is incorrect."
+      responses:
+        '201':
+          description: Message sent successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — admins cannot send messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Retrieve ───────────────────────────────
+  /message/messages/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID of the message.
+        schema:
+          type: string
+          format: uuid
+        example: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
+
+    get:
+      tags:
+        - Messages
+      summary: Retrieve a message
+      description: |
+        Returns a single message by UUID.
+
+        - **Officer** — can only retrieve their own messages. Returns `404` for messages belonging to other users.
+        - **Admin** — can retrieve any message.
+
+        > **Permission:** Officer (own) · Admin (any)
+      operationId: messageRetrieve
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Message retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Message not found (does not exist or belongs to another user).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Mark as Read ───────────────────────────
+  /message/messages/{id}/mark-read/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID of the message to mark as read.
+        schema:
+          type: string
+          format: uuid
+        example: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
+
+    patch:
+      tags:
+        - Messages
+      summary: Mark a message as read
+      description: |
+        Sets `is_read = true` on the specified message.  
+        No request body is required.
+
+        > **Permission:** Admin only. Officers cannot mark messages as read.
+      operationId: messageMarkRead
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Empty body — no fields required.
+              example: {}
+      responses:
+        '200':
+          description: Message marked as read successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkReadResponse'
+              example:
+                message: "Message marked as read"
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — officers cannot mark messages as read.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Message not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

@@ -8,6 +8,8 @@ urlpatterns_apps = [
     path('officer/', include('apps.officer.urls')),
     path('notice/', include('apps.notice.urls')),
     path('memory/', include('apps.gallery.urls')),
+    path('message/', include('apps.message.urls')),
+
 ]
 
 app_name = 'core'

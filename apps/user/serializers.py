@@ -5,7 +5,8 @@ from .models import User
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','email','number_type', 'number', 'rank', 'full_name', 'decoration', 'course_type', 'course_number', 'retirement_date', 'ts_number', 'address_type', 'phone', 'whatsapp_number',  'nok_name', 'nok_phone', 'nok_relation','is_staff','is_active']
+        fields = ['id','email','number_type', 'number', 'rank', 'full_name', 'decoration', 'course_type', 'course_number', 'retirement_date', 'ts_number', 'address_type', 'country', 'division', 'district', 'upazila_thana', 'street_address', "present_address", "permanent_address",
+                  'phone', 'whatsapp_number',  'nok_name', 'nok_phone', 'nok_relation','is_staff','is_active']
         read_only_fields = ('id', 'created_at', 'updated_at','is_staff','is_active')
 
 
@@ -15,8 +16,8 @@ class UserRegistrationSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'password', 'number_type', 'number', 'rank', 'full_name', 'decoration', 
-                  'course_type', 'course_number', 'retirement_date', 'ts_number', 'address_type', 'phone', 
-                  'whatsapp_number', 'nok_name', 'nok_phone', 'nok_relation']
+                  'course_type', 'course_number', 'retirement_date', 'ts_number', 'address_type', 'country', 'division', 'district', 'upazila_thana', 'street_address', "present_address", "permanent_address",
+                  'phone','whatsapp_number', 'nok_name', 'nok_phone', 'nok_relation']
         read_only_fields = ('id',)
     
     def create(self, validated_data):
