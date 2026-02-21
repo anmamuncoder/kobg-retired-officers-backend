@@ -114,33 +114,25 @@ components:
           type: string
           example: "Permanent"
           nullable: true
-        country:
-          type: string
-          example: "Bangladesh"
-          nullable: true
-        division:
-          type: string
-          example: "Dhaka"
-          nullable: true
-        district:
-          type: string
-          example: "Dhaka"
-          nullable: true
-        upazila_thana:
-          type: string
-          example: "Dhanmondi"
-          nullable: true
-        street_address:
-          type: string
-          example: "House 12, Road 5"
-          nullable: true
         present_address:
-          type: string
-          example: "House 12, Road 5, Dhanmondi, Dhaka"
+          type: object
+          description: Present address as a JSON object.
+          example:
+            street: "House 12, Road 5"
+            city: "Dhaka"
+            district: "Dhaka"
+            division: "Dhaka"
+            country: "Bangladesh"
           nullable: true
         permanent_address:
-          type: string
-          example: "Village: Karimpur, PO: Karimpur, Dist: Sylhet"
+          type: object
+          description: Permanent address as a JSON object.
+          example:
+            village: "Karimpur"
+            po: "Karimpur"
+            district: "Sylhet"
+            division: "Sylhet"
+            country: "Bangladesh"
           nullable: true
         phone:
           type: string
@@ -229,27 +221,24 @@ components:
         address_type:
           type: string
           example: "Permanent"
-        country:
-          type: string
-          example: "Bangladesh"
-        division:
-          type: string
-          example: "Dhaka"
-        district:
-          type: string
-          example: "Dhaka"
-        upazila_thana:
-          type: string
-          example: "Dhanmondi"
-        street_address:
-          type: string
-          example: "House 12, Road 5"
         present_address:
-          type: string
-          example: "House 12, Road 5, Dhanmondi, Dhaka"
+          type: object
+          description: Present address as a JSON object.
+          example:
+            street: "House 12, Road 5"
+            city: "Dhaka"
+            district: "Dhaka"
+            division: "Dhaka"
+            country: "Bangladesh"
         permanent_address:
-          type: string
-          example: "Village: Karimpur, PO: Karimpur, Dist: Sylhet"
+          type: object
+          description: Permanent address as a JSON object.
+          example:
+            village: "Karimpur"
+            po: "Karimpur"
+            district: "Sylhet"
+            division: "Sylhet"
+            country: "Bangladesh"
         phone:
           type: string
           example: "+8801711000000"
@@ -361,27 +350,24 @@ components:
         address_type:
           type: string
           example: "Permanent"
-        country:
-          type: string
-          example: "Bangladesh"
-        division:
-          type: string
-          example: "Dhaka"
-        district:
-          type: string
-          example: "Dhaka"
-        upazila_thana:
-          type: string
-          example: "Dhanmondi"
-        street_address:
-          type: string
-          example: "House 12, Road 5"
         present_address:
-          type: string
-          example: "House 12, Road 5, Dhanmondi, Dhaka"
+          type: object
+          description: Present address as a JSON object.
+          example:
+            street: "House 12, Road 5"
+            city: "Dhaka"
+            district: "Dhaka"
+            division: "Dhaka"
+            country: "Bangladesh"
         permanent_address:
-          type: string
-          example: "Village: Karimpur, PO: Karimpur, Dist: Sylhet"
+          type: object
+          description: Permanent address as a JSON object.
+          example:
+            village: "Karimpur"
+            po: "Karimpur"
+            district: "Sylhet"
+            division: "Sylhet"
+            country: "Bangladesh"
         phone:
           type: string
           example: "+8801711000000"
