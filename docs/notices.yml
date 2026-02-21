@@ -1,21 +1,15 @@
 openapi: 3.0.3
 
 info:
-  title: Message API
+  title: Notice API
   description: |
-    REST API for internal messaging between officers and admins.
-
-    ## Role-based access
-
-    | Method | Officer | Admin |
-    |--------|---------|-------|
-    | `GET /messages/` | ✅ Own messages only | ✅ All messages |
-    | `GET /messages/{id}/` | ✅ Own messages only | ✅ Any message |
-    | `POST /messages/` | ✅ Send a message | ❌ |
-    | `PATCH /messages/{id}/mark-read/` | ❌ | ✅ |
-    | `PUT` / `DELETE` | ❌ | ❌ |
-
-    `sender` is set automatically from the JWT token — do **not** pass it in the request body.
+    REST API for notice board management.  
+    - **Authenticated users** can read (list / retrieve) notices.  
+    - **Admin / staff users** can create, update, and delete notices.  
+    
+    The list endpoint automatically filters out inactive notices and notices
+    whose `expires_at` has passed. Results are ordered: pinned first, then
+    featured, then newest.
   version: 1.0.0
 
 servers:
@@ -25,11 +19,11 @@ servers:
     description: Production server
 
 tags:
-  - name: Messages
-    description: Message operations
+  - name: Notices
+    description: Notice board operations
 
 # ─────────────────────────────────────────────
-# SECURITY
+# SECURITY SCHEMES
 # ─────────────────────────────────────────────
 components:
   securitySchemes:
@@ -40,64 +34,82 @@ components:
       description: JWT access token obtained from /users/login/.
 
   # ─────────────────────────────────────────────
-  # SCHEMAS
+  # REUSABLE SCHEMAS
   # ─────────────────────────────────────────────
   schemas:
 
-    # ── Message (read) ─────────────────────────
-    Message:
+    # ── Notice (read) ──────────────────────────
+    Notice:
       type: object
       properties:
         id:
           type: string
           format: uuid
           readOnly: true
-          example: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
-        subject:
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        title:
           type: string
-          example: "Profile Correction"
-        body:
+          example: "Annual General Meeting"
+        message:
           type: string
-          example: "My joining date is incorrect. Please update it."
-        is_read:
+          example: "The AGM will be held on 1st March 2026 at 10:00 AM."
+        is_featured:
           type: boolean
-          readOnly: true
-          description: Set to true by admin via the mark-read action. Cannot be set by the sender.
+          description: Marks the notice as important / highlighted.
+          example: true
+        is_active:
+          type: boolean
+          description: Soft-hide flag. Inactive notices are not returned to users.
+          example: true
+        is_pinned:
+          type: boolean
+          description: Pinned notices appear at the top of the list.
           example: false
-        sender:
+        expires_at:
           type: string
-          format: uuid
-          readOnly: true
-          description: UUID of the officer who sent the message. Auto-set from JWT token.
-          example: "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+          format: date-time
+          nullable: true
+          description: |
+            Optional expiry datetime (ISO 8601 / UTC).  
+            If set, the notice is hidden from the list once this time has passed.
+          example: "2026-03-01T18:00:00Z"
         created_at:
           type: string
           format: date-time
           readOnly: true
-          example: "2026-02-20T09:30:00Z"
+          example: "2026-02-01T09:30:00Z"
 
-    # ── Message write (POST) ───────────────────
-    MessageRequest:
+    # ── Notice write (create / update) ─────────
+    NoticeRequest:
       type: object
       required:
-        - subject
-        - body
+        - title
+        - message
       properties:
-        subject:
+        title:
           type: string
           maxLength: 255
-          example: "Profile Correction"
-        body:
-          type: string
-          example: "My joining date is incorrect. Please update it."
-
-    # ── Mark-read response ─────────────────────
-    MarkReadResponse:
-      type: object
-      properties:
+          example: "Annual General Meeting"
         message:
           type: string
-          example: "Message marked as read"
+          example: "The AGM will be held on 1st March 2026 at 10:00 AM."
+        is_featured:
+          type: boolean
+          default: false
+          example: true
+        is_active:
+          type: boolean
+          default: true
+          example: true
+        is_pinned:
+          type: boolean
+          default: false
+          example: false
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-01T18:00:00Z"
 
     # ── Errors ─────────────────────────────────
     ErrorResponse:
@@ -115,9 +127,9 @@ components:
         items:
           type: string
       example:
-        subject:
+        title:
           - "This field is required."
-        body:
+        message:
           - "This field may not be blank."
 
 
@@ -127,45 +139,42 @@ components:
 paths:
 
   # ── List / Create ──────────────────────────
-  /message/messages/:
+  /notice/notices/:
     get:
       tags:
-        - Messages
-      summary: List messages
+        - Notices
+      summary: List all active notices
       description: |
-        Returns a list of messages ordered newest first.
+        Returns all notices that are:
+        - `is_active = true`
+        - `expires_at` is null **or** has not yet passed
 
-        - **Officer** — returns only messages sent by the authenticated user.
-        - **Admin** — returns all messages from all users.
+        Results are ordered: **pinned → featured → newest**.
 
-        > **Permission:** Officer (own) · Admin (all)
-      operationId: messageList
+        > **Permission:** Any authenticated user.
+      operationId: noticeList
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: List of messages.
+          description: A list of active notices.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Message'
+                  $ref: '#/components/schemas/Notice'
               example:
-                - id: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
-                  subject: "Profile Correction"
-                  body: "My joining date is incorrect."
-                  is_read: false
-                  sender: "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
-                  created_at: "2026-02-20T09:30:00Z"
+                - id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                  title: "Annual General Meeting"
+                  message: "The AGM will be held on 1st March 2026 at 10:00 AM."
+                  is_featured: true
+                  is_active: true
+                  is_pinned: true
+                  expires_at: "2026-03-01T18:00:00Z"
+                  created_at: "2026-02-01T09:30:00Z"
         '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden.
+          description: Authentication credentials were not provided or are invalid.
           content:
             application/json:
               schema:
@@ -173,14 +182,14 @@ paths:
 
     post:
       tags:
-        - Messages
-      summary: Send a message
+        - Notices
+      summary: Create a new notice
       description: |
-        Creates a new message. The `sender` field is automatically set from
-        the authenticated user's JWT token — do **not** include it in the body.
+        Creates a new notice. The `created_by` field is automatically set to the
+        currently authenticated admin user — it is not accepted in the request body.
 
-        > **Permission:** Officer only. Admins cannot POST.
-      operationId: messageCreate
+        > **Permission:** Admin / staff only.
+      operationId: noticeCreate
       security:
         - BearerAuth: []
       requestBody:
@@ -188,17 +197,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MessageRequest'
-            example:
-              subject: "Profile Correction 2"
-              body: "My joining date is incorrect."
+              $ref: '#/components/schemas/NoticeRequest'
       responses:
         '201':
-          description: Message sent successfully.
+          description: Notice created successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
+                $ref: '#/components/schemas/Notice'
         '400':
           description: Validation error.
           content:
@@ -212,105 +218,85 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden — admins cannot send messages.
+          description: Forbidden — caller is not an admin/staff user.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ── Retrieve ───────────────────────────────
-  /message/messages/{id}/:
+  # ── Retrieve / Update / Delete ─────────────
+  /notice/notices/{id}/:
     parameters:
       - name: id
         in: path
         required: true
-        description: UUID of the message.
+        description: UUID of the notice.
         schema:
           type: string
           format: uuid
-        example: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
 
     get:
       tags:
-        - Messages
-      summary: Retrieve a message
+        - Notices
+      summary: Retrieve a notice
       description: |
-        Returns a single message by UUID.
+        Returns a single notice by UUID.  
+        Only active, non-expired notices are accessible to regular users.
 
-        - **Officer** — can only retrieve their own messages. Returns `404` for messages belonging to other users.
-        - **Admin** — can retrieve any message.
-
-        > **Permission:** Officer (own) · Admin (any)
-      operationId: messageRetrieve
+        > **Permission:** Any authenticated user.
+      operationId: noticeRetrieve
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Message retrieved.
+          description: Notice retrieved.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
+                $ref: '#/components/schemas/Notice'
         '401':
           description: Unauthorized.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Message not found (does not exist or belongs to another user).
+          description: Notice not found (does not exist, is inactive, or has expired).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # ── Mark as Read ───────────────────────────
-  /message/messages/{id}/mark-read/:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: UUID of the message to mark as read.
-        schema:
-          type: string
-          format: uuid
-        example: "a1c1b3b6-6173-47be-a957-10101a71c9b8"
-
-    patch:
+    put:
       tags:
-        - Messages
-      summary: Mark a message as read
+        - Notices
+      summary: Fully update a notice
       description: |
-        Sets `is_read = true` on the specified message.  
-        No request body is required.
+        Replaces all writable fields of the notice. All required fields must be provided.
 
-        > **Permission:** Admin only. Officers cannot mark messages as read.
-      operationId: messageMarkRead
+        > **Permission:** Admin / staff only.
+      operationId: noticeUpdate
       security:
         - BearerAuth: []
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              description: Empty body — no fields required.
-              example: {}
+              $ref: '#/components/schemas/NoticeRequest'
       responses:
         '200':
-          description: Message marked as read successfully.
+          description: Notice updated successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MarkReadResponse'
-              example:
-                message: "Message marked as read"
+                $ref: '#/components/schemas/Notice'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Unauthorized.
           content:
@@ -318,13 +304,96 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden — officers cannot mark messages as read.
+          description: Forbidden — caller is not an admin/staff user.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Message not found.
+          description: Notice not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Notices
+      summary: Partially update a notice
+      description: |
+        Updates one or more fields of the notice. Only provided fields are changed.
+
+        > **Permission:** Admin / staff only.
+      operationId: noticePartialUpdate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoticeRequest'
+      responses:
+        '200':
+          description: Notice partially updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notice'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — caller is not an admin/staff user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Notice not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Notices
+      summary: Delete a notice
+      description: |
+        Permanently deletes the notice. Consider using `PATCH` to set
+        `is_active: false` for a soft-hide instead.
+
+        > **Permission:** Admin / staff only.
+      operationId: noticeDestroy
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Notice deleted successfully. No content returned.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — caller is not an admin/staff user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Notice not found.
           content:
             application/json:
               schema:

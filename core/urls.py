@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from .views import index
 urlpatterns_apps = [
     path('users/', include('apps.user.urls')),
     path('officer/', include('apps.officer.urls')),
@@ -16,6 +17,7 @@ app_name = 'core'
 urlpatterns = (
     [
         path('admin/', admin.site.urls),
+        path('', index, name='index'),
     ]
     + urlpatterns_apps
 )

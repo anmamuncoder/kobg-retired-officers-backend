@@ -44,13 +44,9 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     # ADDRESS
     address_type = models.CharField(max_length=50, blank=True, null=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
-    division = models.CharField(max_length=100, blank=True, null=True)
-    district = models.CharField(max_length=100, blank=True, null=True)
-    upazila_thana = models.CharField(max_length=100, blank=True, null=True)
-    street_address = models.CharField(max_length=255, blank=True, null=True)
-    present_address = models.CharField(max_length=255, blank=True, null=True)
-    permanent_address = models.CharField(max_length=255, blank=True, null=True)
+ 
+    present_address = models.JSONField(blank=True, null=True, default=dict, help_text="Store present address as JSON with keys: country, division, district, upazila_thana, street_address" )
+    permanent_address = models.JSONField(blank=True, null=True,default=dict, help_text="Store permanent address as JSON with keys: country, division, district, upazila_thana, street_address" )
 
     # CONTACT
     phone = models.CharField(max_length=20, blank=True, null=True)

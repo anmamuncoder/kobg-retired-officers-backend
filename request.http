@@ -187,6 +187,17 @@ PATCH  http://127.0.0.1:8000/message/messages/a1c1b3b6-6173-47be-a957-10101a71c9
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
 
 
+### admin
+POST  http://127.0.0.1:8000/message/messages/a1c1b3b6-6173-47be-a957-10101a71c9b8/reply/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
+Content-Type: application/json
+
+{
+   
+  "body": "Thank you for your message. We will look into the issue and get back to you shortly."
+}
+
+
 ### officer
 GET http://127.0.0.1:8000/message/messages/
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxODQ2NzkxLCJpYXQiOjE3NzE1ODc1OTEsImp0aSI6IjdjZWE1MDQzMzQ0YjQ3MTk5NmMxMmFkNDk3MTk1ZDQzIiwiaWQiOiJiZjhmYzMwMS05Y2JjLTQxNzQtOGY5OS1iOGQ1MjBhYzAzYjcifQ.FG5xEn-hVUwBJeBIRZKbXhhdxLQUtXfxP412hfrdc_o

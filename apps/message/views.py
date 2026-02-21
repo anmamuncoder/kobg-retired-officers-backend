@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Message
 from .serializers import MessageSerializer
+from .models import MessageReply
+from .serializers import MessageReplySerializer
 from apps.base.permissions import MessagePermission 
 from rest_framework.decorators import action
 
@@ -29,3 +31,18 @@ class MessageView(ModelViewSet):
         message.save(update_fields=["is_read"])
 
         return Response({"message": "Message marked as read"}, status=status.HTTP_200_OK )
+
+    @action(detail=True, methods=["post"], url_path="reply")
+    def reply(self, request, pk=None):
+        # Only admin may reply; MessagePermission will generally allow admin POST on this action.
+        user = request.user
+        if not (user.is_staff or user.is_superuser):
+            return Response({"detail": "You do not have permission to perform this action."}, status=status.HTTP_403_FORBIDDEN)
+
+        parent = self.get_object()
+        serializer = MessageReplySerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save(message=parent)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

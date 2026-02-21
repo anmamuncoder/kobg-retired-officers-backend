@@ -27,7 +27,12 @@ class MessagePermission(BasePermission):
 
         # Admin rules
         if user.is_staff or user.is_superuser:
-            return request.method in ["GET", "PATCH"]
+            # Admin can GET and PATCH generally. Admin can also POST for the custom 'reply' action.
+            if request.method in ["GET", "PATCH"]:
+                return True
+            if request.method == "POST" and getattr(view, "action", None) == "reply":
+                return True
+            return False
 
         # Officer rules
         return request.method in ["GET", "POST"]
