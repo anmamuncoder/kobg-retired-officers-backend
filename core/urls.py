@@ -10,7 +10,6 @@ urlpatterns_apps = [
     path('notice/', include('apps.notice.urls')),
     path('memory/', include('apps.gallery.urls')),
     path('message/', include('apps.message.urls')),
-
 ]
 
 app_name = 'core'

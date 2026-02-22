@@ -67,6 +67,7 @@ INSTALLED_LIBRARY = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    'rest_framework_simplejwt.token_blacklist'
     
 ]
 # Application definition
@@ -187,6 +188,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -197,8 +199,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # for collectstatic in prod
 
 # Media files (user-uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+# MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -227,8 +229,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=6),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     
     'AUTH_HEADER_TYPES': ("Bearer",), 
     'USER_ID_FIELD': "id",

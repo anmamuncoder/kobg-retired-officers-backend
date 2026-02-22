@@ -1,14 +1,21 @@
 # User all list anyone can access with token
 ### Get all users 
 GET http://127.0.0.1:8000/users/list/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
- 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxOTYwNTI1LCJpYXQiOjE3NzE3MDEzMjUsImp0aSI6ImUyMjM0MmU5NjhmZjQ0OWM5MjgyYTFjZDA5NWVhMmNjIiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.xHgk2n7eXQsyFy-4L4n-tsZLyVSNjVh2qL-oeEs6jHA
+
+
+GET http://backend.kobg.org/users/list/
+Authorization:
+
+### Get all users 
+GET http://127.0.0.1:8000/users/list/bf8fc301-9cbc-4174-8f99-b8d520ac03b7/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcyMDE4Mzc4LCJpYXQiOjE3NzE3NTkxNzgsImp0aSI6IjQ0NzY2MDY5ZmQxNTRkYzRhMTRiZTJjNTY5YzY4YWVkIiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.OdCItop02ReKQSljPS3ilwV4Q5cmCepPCLJcarnYwlg
 
 ### User Registration
 POST http://127.0.0.1:8000/users/register/
 
 ###
-POST http://127.0.0.1:8000/users/register/
+POST http://backend.kobg.org/users/register/
 Content-Type: application/json
 
 {
@@ -46,7 +53,7 @@ POST http://127.0.0.1:8000/users/login/
 Content-Type: application/json
 
 {
-  "email": "admin@gmail.com",
+  "email": "anmamuncoder@gmail.com",
   "password": "123"
 }
 
@@ -68,11 +75,11 @@ Content-Type: application/json
 # -----------------------------------------
 ### 
 GET http://127.0.0.1:8000/users/profile/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxOTYwNTgxLCJpYXQiOjE3NzE3MDEzODEsImp0aSI6ImIyODJmNDExZjU5NjQxZTBiNzEyZjVmMGQ4ZjczZTgzIiwiaWQiOiJiZjhmYzMwMS05Y2JjLTQxNzQtOGY5OS1iOGQ1MjBhYzAzYjcifQ.klXaGmM_XJtmNUJDz79m4hzQgwSJHt7kC78DwUMS950
 
 ### 
-PATCH http://127.0.0.1:8000/users/profile/1ad7aa31-12d6-48c0-9948-933ab1ff80fc/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNjY1MDU2LCJpYXQiOjE3NzE0MDU4NTYsImp0aSI6ImEyODc5NzU2NjY5ZjQ3MTU4MGE2N2I3YjlmN2UzM2RjIiwiaWQiOiIxYWQ3YWEzMS0xMmQ2LTQ4YzAtOTk0OC05MzNhYjFmZjgwZmMifQ.nT9qih1wOYfk2nqcu42UlWaN5_ggWq9utDEETzfhRgA
+PATCH http://127.0.0.1:8000/users/profile/bf8fc301-9cbc-4174-8f99-b8d520ac03b7/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxOTYwNTgxLCJpYXQiOjE3NzE3MDEzODEsImp0aSI6ImIyODJmNDExZjU5NjQxZTBiNzEyZjVmMGQ4ZjczZTgzIiwiaWQiOiJiZjhmYzMwMS05Y2JjLTQxNzQtOGY5OS1iOGQ1MjBhYzAzYjcifQ.klXaGmM_XJtmNUJDz79m4hzQgwSJHt7kC78DwUMS950
 Content-Type: application/json
 
 {
@@ -179,8 +186,14 @@ GET http://127.0.0.1:8000/notice/notices/
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxODQ2NzkxLCJpYXQiOjE3NzE1ODc1OTEsImp0aSI6IjdjZWE1MDQzMzQ0YjQ3MTk5NmMxMmFkNDk3MTk1ZDQzIiwiaWQiOiJiZjhmYzMwMS05Y2JjLTQxNzQtOGY5OS1iOGQ1MjBhYzAzYjcifQ.FG5xEn-hVUwBJeBIRZKbXhhdxLQUtXfxP412hfrdc_o
 
 ### admin
-GET http://127.0.0.1:8000/message/messages/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzM2NjE0LCJpYXQiOjE3NzE0Nzc0MTQsImp0aSI6IjBjNDdlMGY1Mzc2ZjQzMWU4NmM5Y2M0MzU2MDc3MmI3IiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.rgPC59D1_ATZlHPBPkQXaR703z7tRHGZN1QYwfZEAiw
+GET http://backend.kobg.org/message/messages/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxOTUzMjk3LCJpYXQiOjE3NzE2OTQwOTcsImp0aSI6ImE3NTY1ODM4MjE0YjQ4ZGE4MDYzM2IwMmZiMzM3NmIzIiwiaWQiOiJlODM0YmExYS1kYmE4LTRhMmMtOWZmMC0zMDY2YTY2NjhiZjQifQ.x3w8YfW0p7LE75L3i4EHPTFGqUyQo0RjwaxFjALMOnc
+
+### admin
+PATCH  http://backend.kobg.org/message/messages/497c7224-213d-40ac-872b-c000fa9893ae/mark-read/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxOTUzMjk3LCJpYXQiOjE3NzE2OTQwOTcsImp0aSI6ImE3NTY1ODM4MjE0YjQ4ZGE4MDYzM2IwMmZiMzM3NmIzIiwiaWQiOiJlODM0YmExYS1kYmE4LTRhMmMtOWZmMC0zMDY2YTY2NjhiZjQifQ.x3w8YfW0p7LE75L3i4EHPTFGqUyQo0RjwaxFjALMOnc
+
+
 
 ### admin
 PATCH  http://127.0.0.1:8000/message/messages/a1c1b3b6-6173-47be-a957-10101a71c9b8/mark-read/
@@ -212,3 +225,8 @@ Content-Type: application/json
   "subject": "Profile Correction 2",
   "body": "My joining date is incorrect."
 }
+
+
+###
+GET http://127.0.0.1:8000/officer/active-access/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcyMDE4Mzc4LCJpYXQiOjE3NzE3NTkxNzgsImp0aSI6IjQ0NzY2MDY5ZmQxNTRkYzRhMTRiZTJjNTY5YzY4YWVkIiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.OdCItop02ReKQSljPS3ilwV4Q5cmCepPCLJcarnYwlg

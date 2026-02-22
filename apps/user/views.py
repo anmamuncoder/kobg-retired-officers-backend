@@ -1,18 +1,18 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import PermissionDenied
 from .models import User
 from .serializers import UserSerializer, UserRegistrationSerializer, UserLoginSerializer, AdminCreationSerializer
 # Create your views here.
 
-class UserView(ListAPIView):
+class UserView(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
     serializer_class = UserSerializer

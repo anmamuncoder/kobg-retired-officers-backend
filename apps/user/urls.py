@@ -4,11 +4,12 @@ from .views import UserView, UserRegistrationView, UserLoginView, UserProfileVie
 
 router = DefaultRouter() 
 router.register('profile',UserProfileView,basename='profile')
+router.register('list',UserView,basename='user-list')
 
 app_name = 'user'
 urlpatterns = (
-    [
-        path('list/',UserView.as_view(),name='user-list'),
+    [ 
+        
         
         path('register/', UserRegistrationView.as_view(), name='register'),
         path('login/', UserLoginView.as_view(), name='login'),

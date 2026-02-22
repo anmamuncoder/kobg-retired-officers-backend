@@ -1,0 +1,142 @@
+openapi: 3.0.3
+
+info:
+  title: Officer Access API
+  description: |
+    REST API for monitoring officer JWT token activity.
+
+    - **Blacklisted officers** — users whose refresh tokens have been blacklisted (logged out).
+    - **Active refresh officers** — users with a valid, non-expired, non-blacklisted refresh token and an active account.
+
+    > All endpoints require admin/staff authentication.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development server
+  - url: https://your-domain.com
+    description: Production server
+
+tags:
+  - name: Officer
+    description: Officer token activity monitoring (admin only)
+
+# ─────────────────────────────────────────────
+# SECURITY + SCHEMAS
+# ─────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /users/login/.
+
+  schemas:
+
+    # ── Active Access response ─────────────────
+    ActiveAccessResponse:
+      type: object
+      properties:
+        blacklisted_access_officers:
+          type: integer
+          description: Total count of officers whose tokens have been blacklisted.
+          example: 3
+        blacklisted_user_ids:
+          type: array
+          description: List of UUIDs of officers with blacklisted tokens.
+          items:
+            type: string
+            format: uuid
+          example:
+            - "550e8400-e29b-41d4-a716-446655440000"
+            - "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+            - "0ee4459f-2990-48a4-ab38-8007d6246f1c"
+        active_refresh_officers:
+          type: integer
+          description: |
+            Total count of officers with a valid, non-expired, non-blacklisted
+            refresh token and `is_active = true`.
+          example: 12
+        active_refresh_user_ids:
+          type: array
+          description: List of UUIDs of currently active officers.
+          items:
+            type: string
+            format: uuid
+          example:
+            - "a1c1b3b6-6173-47be-a957-10101a71c9b8"
+            - "d3f2e7a2-3fc9-4bba-9a8b-0123456789ab"
+
+    # ── Errors ─────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Authentication credentials were not provided."
+
+
+# ─────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────
+paths:
+
+  /officer/active-access/:
+    get:
+      tags:
+        - Officer
+      summary: Get officer token activity summary
+      description: |
+        Returns a summary of JWT token activity across all officers.
+
+        **Blacklisted officers** — derived from `BlacklistedToken` via SimpleJWT's
+        token blacklist. Counts distinct users whose tokens appear in the blacklist
+        (i.e. have explicitly logged out or had their tokens revoked).
+
+        **Active refresh officers** — derived from `OutstandingToken`. A token is
+        considered active when:
+        - `expires_at` is in the future
+        - the token is **not** in the blacklist
+        - the associated user has `is_active = true`
+
+        Both counts reflect users, not token counts — a user with multiple
+        blacklisted tokens is counted once.
+
+        > **Permission:** Admin / staff only (`IsAuthenticated` + `IsAdminUser`).
+      operationId: officerActiveAccess
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token activity summary returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveAccessResponse'
+              example:
+                blacklisted_access_officers: 3
+                blacklisted_user_ids:
+                  - "550e8400-e29b-41d4-a716-446655440000"
+                  - "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+                  - "0ee4459f-2990-48a4-ab38-8007d6246f1c"
+                active_refresh_officers: 12
+                active_refresh_user_ids:
+                  - "a1c1b3b6-6173-47be-a957-10101a71c9b8"
+                  - "d3f2e7a2-3fc9-4bba-9a8b-0123456789ab"
+        '401':
+          description: Unauthorized — no token or invalid token provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Authentication credentials were not provided."
+        '403':
+          description: Forbidden — caller is not an admin/staff user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "You do not have permission to perform this action."
