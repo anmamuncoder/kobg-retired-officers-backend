@@ -61,6 +61,7 @@ CUSTOM_APPS = [
     "apps.notice",
     "apps.gallery",
     "apps.message",
+    "apps.course",
 ]
 
 INSTALLED_LIBRARY = [

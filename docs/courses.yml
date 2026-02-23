@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: Course API
+  description: |
+    REST API for managing courses. 
+    - **Public (unauthenticated):** Read-only access (GET).
+    - **Admin only (is_staff / is_superuser):** Full CRUD access.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local development server
+
+tags:
+  - name: Courses
+    description: Endpoints for managing courses
+
+paths:
+  /course/courses/:
+    get:
+      tags:
+        - Courses
+      summary: List all courses
+      description: Returns a list of all courses ordered by `order` field. Accessible by anyone (no authentication required).
+      operationId: listCourses
+      responses:
+        '200':
+          description: A list of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Course'
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Introduction to Python"
+                  description: "Learn the basics of Python programming."
+                  order: 1
+                  created_at: "2025-01-01T10:00:00Z"
+                  updated_at: "2025-01-05T12:00:00Z"
+                - id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Django for Beginners"
+                  description: "Build web applications with Django."
+                  order: 2
+                  created_at: "2025-01-02T10:00:00Z"
+                  updated_at: "2025-01-06T12:00:00Z"
+
+    post:
+      tags:
+        - Courses
+      summary: Create a new course
+      description: Creates a new course. **Admin only** (`is_staff` or `is_superuser`).
+      operationId: createCourse
+      security:
+        - sessionAuth: []
+        - basicAuth: []
+        - tokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseCreate'
+            example:
+              name: "Introduction to Python"
+              description: "Learn the basics of Python programming."
+              order: 1
+      responses:
+        '201':
+          description: Course created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "Introduction to Python"
+                description: "Learn the basics of Python programming."
+                order: 1
+                created_at: "2025-02-23T10:00:00Z"
+                updated_at: "2025-02-23T10:00:00Z"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                name:
+                  - "This field is required."
+        '401':
+          description: Authentication credentials were not provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Authentication credentials were not provided."
+        '403':
+          description: Permission denied (user is not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "You do not have permission to perform this action."
+
+  /course/courses/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier (UUID) of the course
+        schema:
+          type: string
+          format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    get:
+      tags:
+        - Courses
+      summary: Retrieve a course
+      description: Returns details of a specific course. Accessible by anyone.
+      operationId: retrieveCourse
+      responses:
+        '200':
+          description: Course details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                name: "Introduction to Python"
+                description: "Learn the basics of Python programming."
+                order: 1
+                created_at: "2025-01-01T10:00:00Z"
+                updated_at: "2025-01-05T12:00:00Z"
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "Not found."
+
+    put:
+      tags:
+        - Courses
+      summary: Update a course (full)
+      description: Fully updates a course. All fields are required. **Admin only**.
+      operationId: updateCourse
+      security:
+        - sessionAuth: []
+        - basicAuth: []
+        - tokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseCreate'
+            example:
+              name: "Introduction to Python (Updated)"
+              description: "Updated description for Python basics."
+              order: 1
+      responses:
+        '200':
+          description: Course updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Courses
+      summary: Update a course (partial)
+      description: Partially updates a course. Only provided fields are updated. **Admin only**.
+      operationId: partialUpdateCourse
+      security:
+        - sessionAuth: []
+        - basicAuth: []
+        - tokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoursePartialUpdate'
+            example:
+              order: 3
+      responses:
+        '200':
+          description: Course partially updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Courses
+      summary: Delete a course
+      description: Deletes a course permanently. **Admin only**.
+      operationId: deleteCourse
+      security:
+        - sessionAuth: []
+        - basicAuth: []
+        - tokenAuth: []
+      responses:
+        '204':
+          description: Course deleted successfully (no content)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+      description: Django session-based authentication
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic authentication (username & password)
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication. Format — `Token <your_token>`
+
+  schemas:
+    Course:
+      type: object
+      description: Full course object returned by the API
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Auto-generated unique identifier (UUID from BaseModel)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the course
+          example: "Introduction to Python"
+        description:
+          type: string
+          description: Detailed description of the course
+          example: "Learn the basics of Python programming."
+        order:
+          type: integer
+          minimum: 0
+          description: Display order of the course (ascending). Defaults to 0.
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the course was created
+          example: "2025-01-01T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the course was last updated
+          example: "2025-01-05T12:00:00Z"
+
+    CourseCreate:
+      type: object
+      description: Payload for creating or fully updating a course
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the course
+          example: "Introduction to Python"
+        description:
+          type: string
+          description: Detailed description of the course
+          example: "Learn the basics of Python programming."
+        order:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Display order of the course. Defaults to 0 if not provided.
+          example: 1
+
+    CoursePartialUpdate:
+      type: object
+      description: Payload for partially updating a course. All fields are optional.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: "Advanced Python"
+        description:
+          type: string
+          example: "Deep dive into Python internals."
+        order:
+          type: integer
+          minimum: 0
+          example: 2
+
+    ValidationError:
+      type: object
+      description: Field-level validation errors
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        name:
+          - "This field may not be blank."
+        order:
+          - "Ensure this value is greater than or equal to 0."
+
+    Error:
+      type: object
+      description: Generic API error
+      properties:
+        detail:
+          type: string
+          example: "Not found."
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    Unauthorized:
+      description: Authentication credentials were not provided
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Authentication credentials were not provided."
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "You do not have permission to perform this action."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Not found."

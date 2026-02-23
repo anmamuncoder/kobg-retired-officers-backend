@@ -19,10 +19,10 @@ class MessageView(ModelViewSet):
 
         # Admin sees all
         if user.is_staff or user.is_superuser:
-            return Message.objects.all()
+            return Message.objects.all().order_by("-created_at")
 
         # Officer never GETs, but safe fallback
-        return Message.objects.filter(sender=user)
+        return Message.objects.filter(sender=user).order_by("-created_at")      
 
     @action(detail=True, methods=["patch"], url_path="mark-read")
     def mark_as_read(self, request, pk=None):

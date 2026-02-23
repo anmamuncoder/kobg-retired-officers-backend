@@ -53,7 +53,7 @@ POST http://127.0.0.1:8000/users/login/
 Content-Type: application/json
 
 {
-  "email": "anmamuncoder@gmail.com",
+  "email": "admin@gmail.com",
   "password": "123"
 }
 
@@ -230,3 +230,19 @@ Content-Type: application/json
 ###
 GET http://127.0.0.1:8000/officer/active-access/
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcyMDE4Mzc4LCJpYXQiOjE3NzE3NTkxNzgsImp0aSI6IjQ0NzY2MDY5ZmQxNTRkYzRhMTRiZTJjNTY5YzY4YWVkIiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.OdCItop02ReKQSljPS3ilwV4Q5cmCepPCLJcarnYwlg
+
+
+### course admin create
+POST http://127.0.0.1:8000/course/courses/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxODUyMDExLCJpYXQiOjE3NzE4MzA0MTEsImp0aSI6ImFjYzVjMGZlMGJhNDRmOGNiOTAzN2VhZTkxMzc2YjZhIiwiaWQiOiIwZWU0NDU5Zi0yOTkwLTQ4YTQtYWIzOC04MDA3ZDYyNDZmMWMifQ.Og_zGPaL5S_WTbgNlF-XF7ZSEYW0SLHozq_RGz_PoF4
+Content-Type: application/json
+
+{
+  "name": "Advanced Military Strategy",
+  "description": "An in-depth course on modern military tactics and strategy."
+}
+
+### course view officer
+GET http://127.0.0.1:8000/course/courses/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxODUyMDU5LCJpYXQiOjE3NzE4MzA0NTksImp0aSI6ImU0ZDEwMzBhNjE5MzRkY2FiNGM2NWE3OTEwN2Y4YjU2IiwiaWQiOiJiZjhmYzMwMS05Y2JjLTQxNzQtOGY5OS1iOGQ1MjBhYzAzYjcifQ.Hw-wPEQfSw9j7h24dJh7tnJ_rvvE4KfhvrPBM4LjH7E
+
