@@ -9,14 +9,18 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import PermissionDenied
 from .models import User
-from .serializers import UserSerializer, UserRegistrationSerializer, UserLoginSerializer, AdminCreationSerializer
+from .serializers import UserRetrieveSerializer, UserSerializer, UserRetrieveSerializer, UserRegistrationSerializer, UserLoginSerializer, AdminCreationSerializer
 # Create your views here.
+
 
 class UserView(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
-    serializer_class = UserSerializer
 
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return UserRetrieveSerializer
+        return UserSerializer
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -57,7 +61,7 @@ class UserLoginView(APIView):
  
 
 class UserProfileView(ModelViewSet):
-    serializer_class = UserSerializer
+    serializer_class = UserRetrieveSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'put', 'patch'] 
 
@@ -132,6 +136,79 @@ class UserApprovalView(APIView):
             'user_id': user.id,
             'email': user.email, 
             'is_active': user.is_active
+        }, status=HTTP_200_OK)
+
+# User rejection API
+class UserRejectView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        """
+        Reject/Deactivate a user account. Only staff/admin users can use this endpoint.
+        Request body should contain: {"user_id": "user_id_here", "reason": "reason for rejection"}
+        """
+        user_id = request.data.get('user_id')
+        reason = request.data.get('reason')
+
+        if not user_id:
+            return Response({
+                'error': 'user_id is required'
+            }, status=HTTP_400_BAD_REQUEST)
+        if not reason:
+            return Response({
+                'error': 'reason is required'
+            }, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=user_id)
+            user_email = user.email
+            user_is_active = user.is_active
+
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=HTTP_404_NOT_FOUND)
+
+        # Deactivate the user
+        user.is_active = False
+        user.save(update_fields=['is_active'])
+
+        if user and user_is_active:
+            return Response({
+                'message': 'Deactivated user successfully',
+                'user_id': user_id,
+                'email': user_email,
+                'is_active': user_is_active
+            }, status=HTTP_200_OK)
+        
+        # -------------------------------------------------------------
+        # Send rejection email to the user with the reason for rejection
+        # -------------------------------------------------------------
+
+        try:
+            send_mail(
+                subject='Your Account Has Been Rejected',
+                message=(
+                    f'Hello {user.number_type} {user.number} {user.full_name} {user.rank},\n\n'
+                    'Your account has been rejected by the admin.\n'
+                    f'Reason: {reason}\n\n'
+                    'If you have questions, please contact support.\n\n'
+                    'Thank you.'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print("Email failed:", e)
+
+        user.delete()  # Permanently delete the user from the database
+        return Response({
+                'message': 'User rejected and deleted successfully',
+                'user_id': user_id,
+                'email': user_email,
+                'is_active': user_is_active,
+                'reason': reason
         }, status=HTTP_200_OK)
 
 

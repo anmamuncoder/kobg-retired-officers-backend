@@ -39,6 +39,59 @@ components:
   # ─────────────────────────────────────────────
   schemas:
 
+    # ── Tagged Memory Photo ────────────────────
+    TaggedMemoryPhoto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c2612373-1d9a-466a-af6e-20c540a00c1a"
+        image:
+          type: string
+          example: "/media/memories/user_0ee4459f-2990-48a4-ab38-8007d6246f1c/its-a-our-final-memory/its-a-our-fina_Qi8jCEg.jpg"
+        captured_at:
+          type: string
+          format: date-time
+          example: "2026-02-24T09:01:55Z"
+
+    # ── Tagged By (tagger info) ────────────────
+    TaggedBy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "e315754c-38ac-4b63-8efe-d22023e4cbc9"
+        name:
+          type: string
+          example: "NUR MOHUMMOD AL MAMUN"
+        rank_type:
+          type: string
+          example: "Service Number BA/BSS"
+        rank:
+          type: string
+          example: "colonel"
+        decoration:
+          type: string
+          example: "Gallantry Award"
+          nullable: true
+
+    # ── Tagged Memory ──────────────────────────
+    TaggedMemory:
+      type: object
+      properties:
+        tag_by:
+          $ref: '#/components/schemas/TaggedBy'
+        memory_id:
+          type: string
+          format: uuid
+          example: "3baf70f6-988d-4a90-90fa-b95e3d057913"
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaggedMemoryPhoto'
+
     # ── User (full profile, read) ──────────────
     User:
       type: object
@@ -92,6 +145,11 @@ components:
         decoration:
           type: string
           example: "MC"
+          nullable: true
+        photo:
+          type: string
+          format: uri
+          example: "/media/profile/john_doe.jpg"
           nullable: true
         course_type:
           type: string
@@ -162,6 +220,17 @@ components:
           type: boolean
           readOnly: true
           example: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          example: "2026-02-20T11:38:46.807156Z"
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          example: "2026-02-21T19:23:09.952689Z"
+
 
     # ── Registration request ───────────────────
     UserRegistrationRequest:
@@ -179,6 +248,11 @@ components:
           format: password
           writeOnly: true
           example: "SecurePass@123"
+        photo:
+          type: string
+          format: uri
+          example: "/media/profile/john_doe.jpg"
+          nullable: true
         number_type:
           type: string
           example: "Service Number BA/BSS"
@@ -461,6 +535,23 @@ components:
           format: uuid
           example: "550e8400-e29b-41d4-a716-446655440000"
 
+    # ── Rejection request ──────────────────────
+    UserRejectRequest:
+      type: object
+      required:
+        - user_id
+        - reason
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: UUID of the user to reject.
+          example: "d97e643d-03f2-4c6b-b6d5-280d121b6b9a"
+        reason:
+          type: string
+          description: Reason for rejection. Sent to the user via email before deletion.
+          example: "Incomplete profile and invalid documents."
+
     # ── Error responses ────────────────────────
     ErrorResponse:
       type: object
@@ -593,6 +684,88 @@ paths:
               example:
                 detail: "Authentication credentials were not provided."
 
+  # ── User List Retrieve ──────────────────────
+  /users/list/{id}/:
+    get:
+      tags:
+        - Users
+      summary: Retrieve a single user by ID
+      description: |
+        Returns a single user's full profile including their `tagged_memorys` —
+        the list of memories in which the user has been tagged, along with
+        the tagger's info and the associated photos.  
+        Requires authentication.
+      operationId: userRetrieve
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of the user.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                id: "e315754c-38ac-4b63-8efe-d22023e4cbc9"
+                email: "anmamuncodere@gmail.com"
+                number_type: "Service Number BA/BSS"
+                number: "BA/BSS0014dsf"
+                rank: "colonel"
+                full_name: "NUR MOHUMMOD AL MAMUN"
+                decoration: "Gallantry Award"
+                photo: null
+                course_type: "Military Command"
+                course_number: "MC-2020"
+                retirement_date: "2020-06-30"
+                ts_number: "TS-001"
+                address_type: "Residential"
+                present_address: {}
+                permanent_address: {}
+                phone: "+880-1234567890"
+                whatsapp_number: "+880-1234567890"
+                nok_name: "Jane Doe"
+                nok_phone: "+880-9876543210"
+                nok_relation: "Spouse"
+                is_staff: false
+                is_active: false
+                created_at: "2026-02-21T09:55:07.862652Z"
+                updated_at: "2026-02-21T09:55:07.882133Z"
+                tagged_memorys:
+                  - tag_by:
+                      id: "e315754c-38ac-4b63-8efe-d22023e4cbc9"
+                      name: "NUR MOHUMMOD AL MAMUN"
+                      rank_type: "Service Number BA/BSS"
+                      rank: "colonel"
+                      decoration: "Gallantry Award"
+                    memory_id: "3baf70f6-988d-4a90-90fa-b95e3d057913"
+                    photos:
+                      - id: "c2612373-1d9a-466a-af6e-20c540a00c1a"
+                        image: "/media/memories/user_0ee4459f-2990-48a4-ab38-8007d6246f1c/its-a-our-final-memory/its-a-our-fina_Qi8jCEg.jpg"
+                        captured_at: "2026-02-24T09:01:55Z"
+                      - id: "cf6bd6e6-fc13-4075-a67c-9dbd0f42c56d"
+                        image: "/media/memories/user_0ee4459f-2990-48a4-ab38-8007d6246f1c/its-a-our-final-memory/its-a-our-fina_wqUJjz1.png"
+                        captured_at: "2026-02-24T09:02:15Z"
+        '401':
+          description: Authentication credentials were not provided or are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # ── Profile (ViewSet via Router) ───────────
   /users/profile/:
     get:
@@ -600,7 +773,7 @@ paths:
         - Users
       summary: Retrieve own profile
       description: |
-        Returns the authenticated user's own profile.  
+        Returns the authenticated user's own profile, including `tagged_memorys`.  
         The result is a list containing only the requesting user's data.
       operationId: profileList
       security:
@@ -614,6 +787,46 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+              example:
+                - id: "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+                  email: "anmamuncoder@gmail.com"
+                  number_type: "Service Number BA/BSS"
+                  number: "BA/BSS0014"
+                  rank: "colonel"
+                  full_name: "AN"
+                  decoration: "Gallantry Award"
+                  photo: null
+                  course_type: "Military Command"
+                  course_number: "MC-2020"
+                  retirement_date: "2020-06-30"
+                  ts_number: "TS-001"
+                  address_type: "Residential"
+                  present_address: null
+                  permanent_address: null
+                  phone: "+880-1234567890"
+                  whatsapp_number: "+880-1234567890"
+                  nok_name: "Jane Doe"
+                  nok_phone: "+880-9876543210"
+                  nok_relation: "Spouse"
+                  is_staff: false
+                  is_active: true
+                  created_at: "2026-02-20T11:38:46.807156Z"
+                  updated_at: "2026-02-21T19:23:09.952689Z"
+                  tagged_memorys:
+                    - tag_by:
+                        id: "bf8fc301-9cbc-4174-8f99-b8d520ac03b7"
+                        name: "AN"
+                        rank_type: "Service Number BA/BSS"
+                        rank: "colonel"
+                        decoration: "Gallantry Award"
+                      memory_id: "3baf70f6-988d-4a90-90fa-b95e3d057913"
+                      photos:
+                        - id: "c2612373-1d9a-466a-af6e-20c540a00c1a"
+                          image: "/media/memories/user_0ee4459f-2990-48a4-ab38-8007d6246f1c/its-a-our-final-memory/its-a-our-fina_Qi8jCEg.jpg"
+                          captured_at: "2026-02-24T09:01:55Z"
+                        - id: "cf6bd6e6-fc13-4075-a67c-9dbd0f42c56d"
+                          image: "/media/memories/user_0ee4459f-2990-48a4-ab38-8007d6246f1c/its-a-our-final-memory/its-a-our-fina_wqUJjz1.png"
+                          captured_at: "2026-02-24T09:02:15Z"
         '401':
           description: Unauthorized.
           content:
@@ -626,7 +839,9 @@ paths:
       tags:
         - Users
       summary: Retrieve own profile by ID
-      description: Returns the authenticated user's profile by UUID. Users can only access their own profile.
+      description: |
+        Returns the authenticated user's profile by UUID, including `tagged_memorys`.  
+        Users can only access their own profile.
       operationId: profileRetrieve
       security:
         - BearerAuth: []
@@ -665,7 +880,8 @@ paths:
       description: |
         Fully replaces the authenticated user's profile.  
         All writable fields must be provided. Users cannot update other profiles.  
-        `id`, `is_staff`, and `is_active` are read-only and will be ignored if sent.
+        `id`, `is_staff`, `is_active`, `created_at`, `updated_at`, and `tagged_memorys`
+        are read-only and will be ignored if sent.
       operationId: profileUpdate
       security:
         - BearerAuth: []
@@ -722,7 +938,8 @@ paths:
       description: |
         Updates one or more fields of the authenticated user's profile.  
         Only the fields provided in the request body are updated.  
-        `id`, `is_staff`, and `is_active` are read-only and will be ignored if sent.
+        `id`, `is_staff`, `is_active`, `created_at`, `updated_at`, and `tagged_memorys`
+        are read-only and will be ignored if sent.
       operationId: profilePartialUpdate
       security:
         - BearerAuth: []
@@ -825,6 +1042,128 @@ paths:
                     example: "user_id is required"
         '401':
           description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden — caller is not an admin/staff user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
+
+  # ── Admin: Reject User ─────────────────────
+  /users/reject/:
+    post:
+      tags:
+        - Admin
+      summary: Reject (deactivate or delete) a user account
+      description: |
+        Performs a two-stage rejection based on the user's current `is_active` status:
+
+        **Stage 1 — User is currently active (`is_active: true`):**  
+        Sets `is_active` to `false` (deactivates the account). No email is sent
+        and the user record is kept in the database. The admin can call this
+        endpoint again to proceed to Stage 2.
+
+        **Stage 2 — User is already inactive (`is_active: false`):**  
+        Sends a rejection email to the user with the provided `reason`, then
+        **permanently deletes** the user record from the database.
+
+        **Requires admin/staff privileges.**
+      operationId: userReject
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRejectRequest'
+            example:
+              user_id: "d97e643d-03f2-4c6b-b6d5-280d121b6b9a"
+              reason: "Incomplete profile and invalid documents."
+      responses:
+        '200':
+          description: |
+            Action taken depends on the user's prior `is_active` state:
+            - **Was active → now deactivated** (`message`: "Deactivated user successfully")
+            - **Was inactive → email sent & deleted** (`message`: "User rejected and deleted successfully")
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Deactivated user successfully"
+                  user_id:
+                    type: string
+                    format: uuid
+                    example: "d97e643d-03f2-4c6b-b6d5-280d121b6b9a"
+                  email:
+                    type: string
+                    format: email
+                    example: "officer@example.com"
+                  is_active:
+                    type: boolean
+                    description: |
+                      Reflects the user's `is_active` value **before** this action was taken.
+                      - `true`  → user was active and has now been deactivated.
+                      - `false` → user was already inactive and has now been deleted.
+                    example: true
+                  reason:
+                    type: string
+                    description: Only present when the user is deleted (Stage 2).
+                    example: "Incomplete profile and invalid documents."
+                    nullable: true
+              examples:
+                deactivated:
+                  summary: Stage 1 — User was active, now deactivated
+                  value:
+                    message: "Deactivated user successfully"
+                    user_id: "d97e643d-03f2-4c6b-b6d5-280d121b6b9a"
+                    email: "officer@example.com"
+                    is_active: true
+                deleted:
+                  summary: Stage 2 — User was inactive, email sent and record deleted
+                  value:
+                    message: "User rejected and deleted successfully"
+                    user_id: "d97e643d-03f2-4c6b-b6d5-280d121b6b9a"
+                    email: "officer@example.com"
+                    is_active: false
+                    reason: "Incomplete profile and invalid documents."
+        '400':
+          description: Missing required fields (`user_id` or `reason`).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              examples:
+                missing_user_id:
+                  summary: user_id not provided
+                  value:
+                    error: "user_id is required"
+                missing_reason:
+                  summary: reason not provided
+                  value:
+                    error: "reason is required"
+        '401':
+          description: Unauthorized — no valid Bearer token provided.
           content:
             application/json:
               schema:

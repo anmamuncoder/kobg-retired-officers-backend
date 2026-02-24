@@ -1,13 +1,53 @@
 from rest_framework.serializers import ModelSerializer, Serializer, CharField, EmailField
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import User
+from apps.gallery.models import Memory, MemoryPhoto
 
 class UserSerializer(ModelSerializer):
+
     class Meta:
         model = User
         fields = ['id','email','number_type', 'number', 'rank', 'full_name', 'decoration','photo' ,'course_type', 'course_number', 'retirement_date', 'ts_number', 'address_type', 'present_address', 'permanent_address',
-                  'phone', 'whatsapp_number',  'nok_name', 'nok_phone', 'nok_relation','is_staff','is_active']
+                  'phone', 'whatsapp_number',  'nok_name', 'nok_phone', 'nok_relation','is_staff','is_active', 'created_at', 'updated_at',]
         read_only_fields = ('id', 'created_at', 'updated_at','is_staff','is_active')
+
+
+class UserRetrieveSerializer(ModelSerializer):
+    tagged_memorys = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id','email','number_type', 'number', 'rank', 'full_name', 'decoration','photo' ,'course_type', 'course_number', 'retirement_date', 'ts_number', 'address_type', 'present_address', 'permanent_address',
+                  'phone', 'whatsapp_number',  'nok_name', 'nok_phone', 'nok_relation','is_staff','is_active','created_at', 'updated_at', 'tagged_memorys']
+        read_only_fields = ('id', 'created_at', 'updated_at','is_staff','is_active','tagged_memorys')
+
+    def get_tagged_memorys(self, obj):
+        tagged_memories = Memory.objects.filter(tagged_friends=obj)
+        result = []
+        for memory in tagged_memories:
+            photos = MemoryPhoto.objects.filter(memory=memory)
+            photo_list = [
+                {
+                    "id": photo.id,
+                    "image": photo.image.url if photo.image else None,
+                    "captured_at": photo.captured_at
+                }
+                for photo in photos
+            ]
+            result.append({
+                "tag_by": {
+                    "id": obj.id,
+                    "name": obj.full_name,
+                    "rank_type": obj.number_type,
+                    "rank": obj.rank,
+                    "decoration": obj.decoration,
+                },
+                "memory_id": memory.id,
+                "photos": photo_list
+            })
+        return result
+
 
 
 class UserRegistrationSerializer(ModelSerializer):
